@@ -9,7 +9,7 @@ Install FastChat and the `vicuna-13b` model as described in the README here: htt
 ```bash
 conda create -n fastchat python=3.10
 conda activate fastchat
-pip3 install fschat flask
+pip install -r requirements.txt
 pip3 install git+https://github.com/huggingface/transformers
 
 python supercharger.py

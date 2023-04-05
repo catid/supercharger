@@ -1,3 +1,5 @@
+# Model related functionality
+
 import re
 import time
 
@@ -91,6 +93,32 @@ def has_system_role(messages):
 def create_conversation_template(messages, separated=True):
     conversation = []
 
+    if not has_system_role(messages):
+        template = [
+            {
+                "role": "system",
+                "content": "You are a helpful AI assistant trained to answer questions and provide assistance on various topics."
+            },
+            {
+                "role": "human",
+                "content": "What is the capital city of France?"
+            },
+            {
+                "role": "assistant",
+                "content": "The capital city of France is Paris."
+            },
+            {
+                "role": "human",
+                "content": "Can you help me with a recipe for spaghetti carbonara?"
+            },
+            {
+                "role": "assistant",
+                "content": "Of course! Here's a simple recipe for spaghetti carbonara:\n\nIngredients:\n- 400g spaghetti\n- 4 large eggs\n- 100g grated pecorino cheese\n- 150g pancetta, diced\n- Salt and black pepper\n- 2 garlic cloves, minced\n\nInstructions:\n1. Cook the spaghetti in a large pot of boiling salted water until al dente.\n2. While the spaghetti is cooking, whisk the eggs in a bowl with the pecorino cheese and a generous amount of black pepper.\n3. In a large skillet, cook the pancetta over medium heat until crisp. Add the minced garlic and cook for an additional minute.\n4. Drain the spaghetti, reserving a cup of pasta water. Add the spaghetti to the skillet with the pancetta and garlic, tossing to combine.\n5. Remove the skillet from the heat, and quickly pour in the egg mixture, stirring constantly to avoid scrambling the eggs. Add some reserved pasta water as needed to create a creamy sauce.\n6. Serve immediately, topped with additional grated pecorino and black pepper if desired."
+            }
+            # Add more user and assistant messages as needed.
+        ]
+        messages = template + messages
+
     for message in messages:
         role = message["role"]
         content = message["content"]
@@ -103,7 +131,7 @@ def create_conversation_template(messages, separated=True):
         if separated:
             conversation.append("###")
 
-    conversation.append("ASSISTANT: ")
+    conversation.append("Assistant:")
 
     return "\n".join(conversation)
 
@@ -162,8 +190,10 @@ class VicunaModel:
             if i%2 == 0 or i == max_new_tokens - 1 or stopped:
                 output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
 
+                #print(f"OUTPUT = {output}")
+
                 pos = output.rfind(stop_str, 0)
-                if pos != -1:
+                if pos > 10:
                     output = output[:pos]
                     stopped = True
                     break

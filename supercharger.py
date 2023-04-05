@@ -1,3 +1,5 @@
+# Example of using m.supercharged_ask() to refine the output of the model.
+
 import argparse
 from pathlib import Path
 

@@ -1,3 +1,6 @@
+# Serves synchronous requests to one model instance.
+# Compatible with `test_client_llm.py`
+
 import argparse
 from pathlib import Path
 
