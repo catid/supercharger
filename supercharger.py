@@ -255,9 +255,9 @@ class VicunaModel:
 def main(args):
     m = VicunaModel(args.model, args.num_gpus)
 
-    goal_prompt = "What is the best way to make money with a 100W laser cutter?"
+    goal_prompt = "Why is the sky blue?"
 
-    print(f"User prompt: {goal_prompt})
+    print(f"User prompt: {goal_prompt}")
 
     best_result = m.supercharged_ask(goal_prompt)
 
