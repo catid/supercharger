@@ -121,3 +121,10 @@ Remember to take into account the costs of materials, labor, and marketing when 
 
 
 Which do you like better?  I personally think GPT-4 is being a lot more creative here.
+
+## Future work
+
+The main challenge is that the AI sometimes generates very degenerate output (repeating itself) or repeating the prompt verbatim instead of following instructions, and it produces widely varying structure in the output that makes parsing and interpreting the output challenging.
+
+Probably the best way to improve this is to use an 8-bit quantized and tuned version of LLaMA-30B leveraging even more ChatGPT examples.
+
