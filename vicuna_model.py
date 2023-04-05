@@ -91,31 +91,6 @@ def has_system_role(messages):
 def create_conversation_template(messages, separated=True):
     conversation = []
 
-    if not has_system_role(messages):
-        template = [
-            {
-                "role": "system",
-                "content": "You are a helpful AI assistant trained to answer questions and provide assistance on various topics."
-            },
-            {
-                "role": "user",
-                "content": "What is the capital city of France?"
-            },
-            {
-                "role": "assistant",
-                "content": "The capital city of France is Paris."
-            },
-            {
-                "role": "user",
-                "content": "Can you help me with a recipe for spaghetti carbonara?"
-            },
-            {
-                "role": "assistant",
-                "content": "Of course! Here's a simple recipe for spaghetti carbonara:\n\nIngredients:\n- 400g spaghetti\n- 4 large eggs\n- 100g grated pecorino cheese\n- 150g pancetta, diced\n- Salt and black pepper\n- 2 garlic cloves, minced\n\nInstructions:\n1. Cook the spaghetti in a large pot of boiling salted water until al dente.\n2. While the spaghetti is cooking, whisk the eggs in a bowl with the pecorino cheese"
-            }
-        ]
-        messages = template + messages
-
     for message in messages:
         role = message["role"]
         content = message["content"]
@@ -128,7 +103,7 @@ def create_conversation_template(messages, separated=True):
         if separated:
             conversation.append("###")
 
-    conversation.append("ASSISTANT:")
+    conversation.append("ASSISTANT: ")
 
     return "\n".join(conversation)
 
