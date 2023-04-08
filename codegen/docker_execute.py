@@ -12,14 +12,6 @@ class DockerExecute:
         self.full_source_path = os.path.join(os.getcwd(), sources_dirname)
         self.container = None
 
-    def is_valid_filename(self, filename):
-        filename = os.path.basename(filename)  # Get just the filename without any path components
-        filename_without_ext = os.path.splitext(filename)[0]  # Get just the filename without the extension
-
-        # Check if the filename matches the expected format of `filename.py`
-        expected_filename = f"{filename_without_ext}.py"
-        return os.path.exists(os.path.join(self.full_source_path, expected_filename))
-
     def recreate_container(self):
         self.shutdown()
 
@@ -33,7 +25,7 @@ class DockerExecute:
             volumes={
                 self.full_source_path: {
                     'bind': f"/{self.sources_dirname}",
-                    'mode': 'ro'
+                    'mode': 'rw'
                     }
                 },
             working_dir=f"/{self.sources_dirname}",
@@ -50,9 +42,6 @@ class DockerExecute:
 
     # Execute a command under `sources` that depends on the given script.  By default it runs the given script.
     def execute(self, script_filename=None, command=None):
-        if script_filename is not None and not self.is_valid_filename(script_filename):
-            return -1, "Script file not found"
-
         try:
             if self.container is None:
                 self.recreate_container()

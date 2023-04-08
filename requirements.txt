@@ -1,5 +1,4 @@
 # Model dependencies
-flask
 torch
 git+https://github.com/huggingface/peft.git
 git+https://github.com/huggingface/transformers.git
@@ -18,3 +17,4 @@ aiohttp
 pytest
 docker
 yapf
+pipreqs

@@ -4,6 +4,7 @@ import multiprocessing
 import logging
 import argparse
 import shutil
+import subprocess
 
 from autopy import autopy_func, autopy_func_improve, autopy_test, autopy_test_improve
 from docker_execute import DockerExecute
@@ -70,7 +71,7 @@ def copy_and_run_pytest(source_dir, function_name, variation, test_variation, ex
     shutil.copyfile(test_source_file, test_dest_file)
 
     # Run pytest command
-    test_script_name = test_dest_file
+    test_script_name = f"{function_name}/test_{function_name}.py"
     command = f"pytest {test_script_name}"
     exit_code, logs = executor.execute(script_filename=test_script_name, command=command)
 
@@ -127,6 +128,24 @@ def terminate_workers(workers):
     for worker in workers:
         worker.terminate()
 
+def generate_requirements(project_path, output_file='requirements.txt'):
+    result = subprocess.run(['pipreqs', project_path, '--force', '--savepath', output_file], capture_output=True, text=True)
+    
+    if result.returncode == 0:
+        return True
+    else:
+        print(f"An error occurred while generating requirements.txt: {result}")
+        return False
+
+def install_container_requirements(sources_dirname, function_name, docker_execute):
+    project_path = os.path.join(sources_dirname, function_name)
+    success = generate_requirements(project_path, output_file=os.path.join(project_path, f"requirements.txt"))
+
+    if success:
+        exit_code, logs = docker_execute.execute(command=f"pip install -r {function_name}/requirements.txt")
+        if exit_code != 0:
+            print(f"An error occurred while installing requirements.txt: exit_code={exit_code} logs={logs}")
+
 def write_code(args):
     logging.info("Setting up...")
 
@@ -153,10 +172,14 @@ def write_code(args):
                 codes.append(code)
                 write_script_to_disk(code, args.sources_dirname, args.function_name, is_test=False, variation=code_variation)
 
+                install_container_requirements(args.sources_dirname, args.function_name, docker_execute)
+
                 for i, _ in enumerate(tests):
                     exit_code, logs = copy_and_run_pytest(args.sources_dirname, args.function_name, code_variation, i, docker_execute)
                     if exit_code == 0:
-                        logging.info("Test passed: code {code_variation} <-> test {i}")
+                        logging.info(f"Test passed: code {code_variation} <-> test {i}")
+                    else:
+                        logging.info(f"Test failed: code {code_variation} <-> test {i}: exit_code={exit_code} logs={logs}")
                     # FIXME: Use the logs to help improve things
 
                 code_variation += 1
@@ -165,10 +188,14 @@ def write_code(args):
                 tests.append(code)
                 write_script_to_disk(code, args.sources_dirname, args.function_name, is_test=True, variation=test_variation)
 
+                install_container_requirements(args.sources_dirname, args.function_name, docker_execute)
+
                 for i, _ in enumerate(codes):
                     exit_code, logs = copy_and_run_pytest(args.sources_dirname, args.function_name, i, test_variation, docker_execute)
                     if exit_code == 0:
-                        logging.info("Test passed: code {i} <-> test {test_variation}")
+                        logging.info(f"Test passed: code {i} <-> test {test_variation}")
+                    else:
+                        logging.info(f"Test failed: code {i} <-> test {test_variation}: exit_code={exit_code} logs={logs}")
                     # FIXME: Use the logs to help improve things
 
                 test_variation += 1
