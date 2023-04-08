@@ -81,7 +81,7 @@ def try_adding_colon(code, line_number):
         return True, code
     return False, orig_code
 
-def fix_ast_errors(code, max_attempts=100, expandtabs=True):
+def fix_ast_errors(code, max_attempts=100, expandtabs=True, delete_on_error=True):
     median_tab_spaces = detect_median_indentation(code)
     if median_tab_spaces <= 1:
         median_tab_spaces = 4
@@ -137,6 +137,15 @@ def fix_ast_errors(code, max_attempts=100, expandtabs=True):
             r, code = try_indenting(code, lineno, delta=-1)
             if r:
                 continue
+
+        # Give up if we can't fix the error and don't want to delete the code
+        if not delete_on_error:
+            break
+
+        # Delete the line that caused the error
+        lines = code.split('\n')
+        del lines[lineno - 1]
+        code = '\n'.join(lines)
 
         attempts += 1
 

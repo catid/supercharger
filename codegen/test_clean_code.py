@@ -26,6 +26,7 @@ def multiply(a, b)
 def divide(a, b):
     return a / b
 
+// Oh no the dumb AI typed something weird in here
 def dostuff():
     x = 5
     y = 2
