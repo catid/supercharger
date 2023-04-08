@@ -1,5 +1,4 @@
-import re
-import time
+import logging
 
 import torch
 from transformers import LlamaForCausalLM, LlamaTokenizer
@@ -38,7 +37,7 @@ def load_model():
     else:
         context_len = 2048
 
-    print(f"Loaded base_model={base_model_name} enhanced with peft_model={peft_model_name} with context length {context_len}")
+    logging.info(f"Loaded base_model={base_model_name} enhanced with peft_model={peft_model_name} with context length {context_len}")
 
     return tokenizer, model, context_len
 
@@ -55,14 +54,11 @@ class LanguageModel:
 
     @torch.inference_mode()
     def ask(self, prompt, stop_strs=None, temperature=0.7, max_new_tokens=512):
-        #print(f"PROMPT: {prompt}")
-
         has_stop_strs = is_array_of_strings(stop_strs)
 
         max_new_tokens = min(max_new_tokens, 1024)
 
         input_ids = self.tokenizer(prompt).input_ids
-        #output_ids = list(input_ids)
         output_ids = []
 
         max_src_len = self.context_len - max_new_tokens - 8
@@ -102,8 +98,6 @@ class LanguageModel:
 
             if i%2 == 0 or i == max_new_tokens - 1 or stopped:
                 output = self.tokenizer.decode(output_ids, skip_special_tokens=True)
-
-                #print(f"OUTPUT = {output}")
 
                 if has_stop_strs:
                     for stop_str in stop_strs:
