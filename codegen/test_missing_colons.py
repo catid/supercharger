@@ -46,6 +46,7 @@ class TestAddMissingColons(unittest.TestCase):
     def test_multi_line(self):
         test_cases = [
             ("if x == 2\n    print(x)\nelse:\n    print('Error')\n", "if x == 2:\n    print(x)\nelse:\n    print('Error')\n"),
+            ('if x > 0: print("x is positive")\nif y < 0: print("y is negative")\n', 'if x > 0: print("x is positive")\nif y < 0: print("y is negative")\n'),
             ("for i in range(10)\n    if i % 2 == 0:\n        print(i)\n", "for i in range(10):\n    if i % 2 == 0:\n        print(i)\n"),
             ("with open('file.txt') as f\n    data = f.read()\n    print(data)\n", "with open('file.txt') as f:\n    data = f.read()\n    print(data)\n")
         ]

@@ -45,6 +45,11 @@ def fix_indentation_errors(code, expandtabs=True):
     indent_level = 0
     prev_indent_level = 0
     fixed_lines = []
+    keyword_indented = False
+
+    # FIX: Handle defining JSON or Array/List
+    # FIX: Handle function call on multiple lines
+    # FIX: Handle multi-line strings
 
     # Loop through each line of code
     for line in lines:
@@ -64,21 +69,19 @@ def fix_indentation_errors(code, expandtabs=True):
         if stripped_line.startswith(('def ', 'if ', 'for ', 'while ', 'try:', 'class ', 'with ')):
             fixed_lines.append(' ' * indent_level + stripped_line)
             indent_level += 4
+            keyword_indented = True
         elif stripped_line.startswith(('else:', 'elif ', 'except ', 'except:', 'finally:')):
-            indent_level -= 4
-            fixed_lines.append(' ' * indent_level + stripped_line)
-            indent_level += 4
-        elif delta_indent < 0:
-            # Lost indentation in original
-            indent_level -= 4
-            fixed_lines.append(' ' * indent_level + stripped_line)
-        elif delta_indent > 0:
-            # Increased indentation in original
-            indent_level += 4
-            fixed_lines.append(' ' * indent_level + stripped_line)
+            fixed_lines.append(' ' * (indent_level - 4) + stripped_line)
         else:
-            # Maintained indentation in original
+            if delta_indent <= -2:
+                # Lost indentation in original
+                indent_level -= 4
+                if indent_level < 0:
+                    indent_level = 0
+
             fixed_lines.append(' ' * indent_level + stripped_line)
+
+        keyword_indented = False
 
     # Join the fixed lines and return the result
     return '\n'.join(fixed_lines)

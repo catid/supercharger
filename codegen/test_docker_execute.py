@@ -8,10 +8,11 @@ sources_dirname = "test_sources"
 test_script = "test_script.py"
 expected_output = "Hello, Docker!"
 
+script_path = os.path.join(os.getcwd(), sources_dirname, test_script)
 os.makedirs(os.path.join(os.getcwd(), sources_dirname), exist_ok=True)
 
 # Write a simple test script to execute in the container
-with open(os.path.join(os.getcwd(), sources_dirname, test_script), "w") as f:
+with open(script_path, "w") as f:
     f.write(f"print('{expected_output}')\n")
 
 # Set up the benchmarking function
@@ -43,4 +44,4 @@ exec_time = benchmark_docker_execute()
 print(f"DockerExecute method: {exec_time:.6f} seconds")
 
 # Remove the test script file
-os.remove(test_script)
+os.remove(script_path)
