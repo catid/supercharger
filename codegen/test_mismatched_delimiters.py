@@ -3,7 +3,6 @@ import ast
 from fix_mismatched_delimiters import fix_mismatched_delimiters
 
 class TestFixMismatchedDelimiters(unittest.TestCase):
-
     def check_syntax(self, code_string):
         try:
             ast.parse(code_string)
@@ -79,6 +78,4 @@ class TestFixMismatchedDelimiters(unittest.TestCase):
         self.run_test_cases(test_cases, "Multi-line Cases")
 
 if __name__ == "__main__":
-    #f = fix_mismatched_delimiters("print(x[1, 2, 3]")
-    #print(f)
     unittest.main()
