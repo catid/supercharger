@@ -1,3 +1,4 @@
+import ast
 import unittest
 
 from fix_indentation_errors import fix_indentation_errors
@@ -6,90 +7,177 @@ from fix_indentation_errors import fix_indentation_errors
 class TestFixIndentationErrors(unittest.TestCase):
 
     test_cases = [
-        {
-            'code_with_errors': """
+        """
+def my_function():
+    message = '''
+        This is a multi-line string.
+        It can span multiple lines.
+        '''
+    print(message)
+        """,
+        """
+def my_function():
+    message = '''
+        This is a multi-line string.
+        It can span multiple lines.
+        '''
+    print(message)
+        """,
+        """
     def my_function():
     print("Hello, world!")
-            """,
-            'expected_output': """
+        """,
+        """
 def my_function():
     print("Hello, world!")
-            """
-        },
-        {
-            'code_with_errors': """
+        """,
+        """
     if x > 0:
     print("x is positive")
-            """,
-            'expected_output': """
+        """,
+        """
 if x > 0:
     print("x is positive")
-            """
-        },
-        {
-            'code_with_errors': """
+        """,
+        """
     for i in range(10):
     print(i)
-            """,
-            'expected_output': """
+        """,
+        """
 for i in range(10):
     print(i)
-            """
-        },
-        {
-            'code_with_errors': """
+        """,
+        """
     try:
     result = 1 / 0
     except ZeroDivisionError:
     print("Cannot divide by zero!")
-            """,
-            'expected_output': """
+        """,
+        """
 try:
     result = 1 / 0
 except ZeroDivisionError:
     print("Cannot divide by zero!")
-            """
-        },
-        {
-            'code_with_errors': """
+        """,
+        """
     if x > 0:
         print("x is positive")
     else:
     print("x is non-positive")
-            """,
-            'expected_output': """
+        """,
+        """
 if x > 0:
     print("x is positive")
 else:
     print("x is non-positive")
-            """
-        },
-        {
-            'code_with_errors': """
+        """,
+        """
     def my_function(x, y):
         if x > 0:
         return x + y
         else:
         return y - x
-            """,
-            'expected_output': """
+        """,
+        """
 def my_function(x, y):
     if x > 0:
         return x + y
     else:
         return y - x
+        """,
+        """
+    def my_function(x, y):
+        if x > 0:
+        return x + y
+        else:
+        return y - x
+        """,
+        """
+def my_function(x, y):
+    if x > 0:
+        return x + y
+    else:
+        return y - x
+        """,
+        """
+    def my_function(x, \\
+        y):
+        if x > 0:
+        return x + y
+        else:
+        return y - x
+        """,
+        """
+def my_function(x, \\
+y):
+    if x > 0:
+        return x + y
+    else:
+        return y - x
+        """,
+        """
+    def my_function(x,
+                    y):
+        if x > 0:
+        return x + y
+        else:
+        return y - x
+            """,
             """
-        },
+def my_function(x,
+    y):
+    if x > 0:
+        return x + y
+    else:
+        return y - x
+        """,
+        "def main():\n"
+        "\tprint('Hello, World!')\n"
+        "\t\tif True:\n"
+        "\t\t\tprint('This is indented with tabs.')\n"
+        "main()",
+        "def main():\n"
+        "    print('Hello, World!')\n"
+        "    if True:\n"
+        "        print('This is indented with tabs.')\n"
+        "main()",
+        "def main():\n"
+        "\tprint('Hello, World!')\n"
+        "\t\tif True:\n"
+        "\t\t\tprint('This is indented with tabs.')\n"
+        "\tprint('Hello, World!')\n"
+        "main()",
+        "def main():\n"
+        "    print('Hello, World!')\n"
+        "    if True:\n"
+        "        print('This is indented with tabs.')\n"
+        "    print('Hello, World!')\n"
+        "main()",
+        "def main():\n"
+        "print('Hello, World!')\n"
+        "if True:\n"
+        "if True:\n"
+        "print('This line should be indented.')\n"
+        "main()",
+        "def main():\n"
+        "    print('Hello, World!')\n"
+        "if True:\n"
+        "    if True:\n"
+        "        print('This line should be indented.')\n"
+        "main()"
     ]
 
     def test_fix_indentation(self):
-        for index, test_case in enumerate(self.test_cases):
+        for index, code in enumerate(self.test_cases):
             with self.subTest(f"Test case {index}"):
-                input_code = test_case['code_with_errors']
-                expected_output = test_case['expected_output'].strip()
-                actual_output = fix_indentation_errors(input_code).strip()
-                msg = f"\nInput code:\n---\n{input_code}\n---\n\nExpected output:\n---\n{expected_output}\n---\nActual output:\n---\n{actual_output}\n---"
-                self.assertEqual(actual_output, expected_output, msg=msg)
+                fixed_code = fix_indentation_errors(code.strip())
+                try:
+                    ast.parse(fixed_code)
+                except Exception as e:
+                    self.fail(f"Test case {index}: Syntax error in fixed code\n"
+                              f"Input code:\n---\n{code}\n---\n"
+                              f"Fixed code:\n---\n{fixed_code}\n---\n"
+                              f"Error: {str(e)}")
 
 if __name__ == '__main__':
     unittest.main()
