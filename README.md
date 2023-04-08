@@ -59,5 +59,5 @@ When running a client, specify the load balancer port 8000 instead of 5000 to us
 ## Test codegen
 
 ```bash
-python codegen/test_codegen.py
+python codegen/codegen.py
 ```

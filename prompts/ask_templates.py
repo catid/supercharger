@@ -106,7 +106,7 @@ def ask_python_function_prototype(comments, prototype, user_role="Human", assist
     messages = [
         {
             "role": "system",
-            "content": "The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers responses carefully and thinks step by step before answering. {assistant_role} always writes syntactically correct Python code."
+            "content": f"The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers responses carefully and thinks step by step before answering. {assistant_role} always writes syntactically correct Python code."
         },
         {
             "role": user_role,

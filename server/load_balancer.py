@@ -5,7 +5,7 @@ import requests
 import time
 import logging
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -14,9 +14,12 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 nodes = []
 current_node = 0
+node_port = 5000
 
 @app.post("/ask")
-async def ask_endpoint(data):
+async def ask_endpoint(request: Request):
+    data = await request.json()
+
     global nodes, current_node
     start_time = time.time()
     timeout = 300 # 5 minutes
@@ -31,16 +34,18 @@ async def ask_endpoint(data):
             current_node = 0
             await asyncio.sleep(1)
 
-        node_url = f"http://{nodes[current_node]}/ask"
+        node_url = f"http://{nodes[current_node]}:{node_port}/ask"
         current_node += 1
 
         try:
+            logging.info(f"Trying on {node_url}")
+            try_start_time = time.time()
             response = requests.post(node_url, json=data)
             response.raise_for_status()
-            logging.info("Completed on {node_url}")
+            logging.info(f"Completed on {node_url} in {time.time() - try_start_time:.2f} seconds (overall delay: {time.time() - start_time:.2f} seconds)")
             return response.json()
         except requests.exceptions.RequestException:
-            logging.info("Node busy: {node_url}")
+            logging.info(f"Node busy: {node_url}")
             pass
 
 def read_node_addresses():
@@ -57,7 +62,8 @@ def main():
     parser.add_argument("--listen", type=int, default=8000, help="Load balancer port")
     args = parser.parse_args()
 
-    global nodes
+    global nodes, node_port
+    node_port = args.port
 
     if args.nodes is None:
         nodes = read_node_addresses()
