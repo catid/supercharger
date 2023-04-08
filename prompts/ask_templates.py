@@ -100,3 +100,119 @@ def is_even(x):
     ]
 
     return create_conversation_template(template + messages, assistant_role=assistant_role, user_role=user_role)
+
+# Generate a python function with a specific prototype
+def ask_python_function_prototype(comments, prototype, user_role="Human", assistant_role="Coder"):
+    messages = [
+        {
+            "role": "system",
+            "content": "The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers responses carefully and thinks step by step before answering. {assistant_role} always writes syntactically correct Python code."
+        },
+        {
+            "role": user_role,
+            "content": "# Add two numbers and return their sum\ndef add_nums(x, y)"
+        },
+        {
+            "role": assistant_role,
+            "content": """```
+def add_nums(x, y):
+    return x + y
+```"""
+        },
+        {
+            "role": user_role,
+            "content": "# Write a function that multiplies two floats\ndef mul_nums(a, b)"
+        },
+        {
+            "role": assistant_role,
+            "content": """```
+def mul_nums(x: float, y: float) -> float:
+    return x * y
+```"""
+        },
+        {
+            "role": user_role,
+            "content": "# A function that checks if an integer is prime\n# Returns true or false\ndef is_prime(n)"
+        },
+        {
+            "role": assistant_role,
+            "content": """```
+def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    for i in range(2, int(n ** 0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+```"""
+        },
+        {
+            "role": user_role,
+            "content": f"{comments}\n{prototype}"
+        },
+    ]
+
+    return create_conversation_template(messages, assistant_role=assistant_role, user_role=user_role)
+
+# Generate a python unit test for a function with a specific prototype
+def ask_python_pytest_prototype(comments, prototype, user_role="Human", assistant_role="Coder"):
+    messages = [
+        {
+            "role": "system",
+            "content": "The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers responses carefully and thinks step by step before answering with a Python program using pytest to exercise the given function. {assistant_role} always writes syntactically correct Python code using pytest."
+        },
+        {
+            "role": user_role,
+            "content": "# Add two numbers and return their sum\ndef add_nums(x, y)"
+        },
+        {
+            "role": assistant_role,
+            "content": """```
+import pytest
+from add_nums import add_nums
+
+def test_add_nums_positive():
+    # Test case 1: adding two positive numbers
+    result = add_nums(2, 3)
+    assert result == 5
+
+def test_add_nums_negative():
+    # Test case 2: adding two negative numbers
+    result = add_nums(-2, -3)
+    assert result == -5
+
+def test_add_nums_mixed():
+    # Test case 3: adding a positive and a negative number
+    result = add_nums(2, -3)
+    assert result == -1
+```"""
+        },
+        {
+            "role": user_role,
+            "content": "# A function that checks if an integer is prime\n# Returns true or false\ndef is_prime(n)"
+        },
+        {
+            "role": assistant_role,
+            "content": """```
+import pytest
+from is_prime import is_prime
+
+def test_is_prime():
+    assert is_prime(2) == True
+    assert is_prime(3) == True
+    assert is_prime(4) == False
+    assert is_prime(5) == True
+    assert is_prime(6) == False
+    assert is_prime(7) == True
+    assert is_prime(8) == False
+    assert is_prime(9) == False
+    assert is_prime(10) == False
+```"""
+        },
+        {
+            "role": user_role,
+            "content": f"{comments}\n{prototype}"
+        },
+    ]
+
+    return create_conversation_template(messages, assistant_role=assistant_role, user_role=user_role)

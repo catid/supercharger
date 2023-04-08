@@ -1,105 +1,25 @@
-import ast
+# Use modules from parent folder
+import os, sys
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
+
 import logging
 
-from ask_llm import ask_llm
-from clean_code import clean_code, parse_code_blocks, find_first_function, add_missing_colons, fix_mismatched_delimiters
+from server.client import ask_server
+from prompts.ask_templates import ask_python_function_prototype
+from clean_code import clean_code
 
-# Ask with reinforcing examples.  We should add more as we learn more about the model.
-# Input must be of the form shown below.
-def ask_llm_for_function(comments, prototype):
-    messages = [
-        {
-            "role": "system",
-            "content": "The following is a conversation between Joe and Coder. Joe and Coder take turns chatting. Coder always considers responses carefully and thinks step by step before answering. Coder always writes syntactically correct Python code."
-        },
-        {
-            "role": "Joe",
-            "content": "# Add two numbers and return their sum\ndef add_nums(x, y)"
-        },
-        {
-            "role": "Assistant",
-            "content": """```
-def add_nums(x, y):
-    return x + y
-```"""
-        },
-        {
-            "role": "Human",
-            "content": "# Write a function that multiplies two floats\ndef mul_nums(a, b)"
-        },
-        {
-            "role": "Assistant",
-            "content": """```
-def mul_nums(x: float, y: float) -> float:
-    return x * y
-```"""
-        },
-        {
-            "role": "Human",
-            "content": "# A function that checks if an integer is prime\n# Returns true or false\ndef is_prime(n)"
-        },
-        {
-            "role": "Assistant",
-            "content": """```
-def is_prime(n: int) -> bool:
-    if n < 2:
-        return False
-    for i in range(2, int(n ** 0.5) + 1):
-        if n % i == 0:
-            return False
-    return True
-```"""
-        },
-        {
-            "role": "Human",
-            "content": f"{comments}\n{prototype}"
-        },
-    ]
-
-    return ask_llm(messages, temperature=0.7, max_tokens=2048)
-
-def auto_pyfunc(comments, prototype):
-
+def auto_pyfunc(comments, prototype, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
     logging.debug(f"auto_pyfunc: comments = `{comments}`")
     logging.debug(f"auto_pyfunc: prototype = `{prototype}`")
 
-    result = ask_llm_for_function(comments, prototype)
+    prompt, stop_strs = ask_python_function_prototype(comments, prototype)
+    result = ask_server(prompt, stop_strs, node, port, temperature, max_tokens)
+    code = clean_code(result)
 
-    logging.debug(f"LLM says:\n{result}")
+    logging.debug(f"auto_pyfunc: code = \n{code}")
 
-    # Remove everything outside of the first ``` code block if found.
-    try:
-        code_block = parse_code_blocks(result)
-        logging.debug(f"code_block:\n{code_block}\n")
-        if len(code_block) > 0:
-            result = code_block
-    except Exception as e:
-        logging.info(f"auto_pyfunc::parse_code_blocks failed due to exception: {e}")
-
-    # Add missing colons and fix mismatched delimiters
-    try:
-        filtered = add_missing_colons(result)
-        logging.debug(f"add_missing_colons:\n{filtered}\n")
-        filtered = fix_mismatched_delimiters(filtered)
-        logging.debug(f"fix_mismatched_delimiters:\n{filtered}\n")
-        if len(filtered) > 0:
-            result = filtered
-    except Exception as e:
-        logging.info(f"auto_pyfunc::add_missing_colons/fix_mismatched_delimiters failed due to exception: {e}")
-
-    # Remove everything unexpected outside of functions
-    try:
-        filtered = find_first_function(result)
-        logging.debug(f"find_first_function:\n{filtered}\n")
-        if len(filtered) > 0:
-            result = filtered
-    except Exception as e:
-        logging.info(f"auto_pyfunc::find_first_function failed due to exception: {e}")
-        logging.info(f"find_first_function:\n{filtered}\n")
-
-    result = clean_code(result)
-
-    if len(result) > 0:
+    if len(code) > 0:
         # Prepend the comments
         result = '\n'.join(comments.splitlines() + result.splitlines())
 
