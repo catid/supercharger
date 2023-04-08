@@ -93,7 +93,7 @@ def main():
         print("Code cleaning failed!")
         return
 
-    print(f"Cleaned code: {code}")
+    #print(f"Cleaned code: {code}")
 
     # Add this call back into the code
     code += "\ndostuff()"

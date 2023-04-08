@@ -56,7 +56,13 @@ def try_indenting(code, e, delta=1):
     orig_code = code
     for i in range(1, 8):
         code = indent_line(code, e, delta=delta)
+
+        #print(f"MODIFIED CODE: {code}")
+
         ne = check_error(code)
+
+        #print(f"NE: {ne}")
+
         if ne is None or ne.lineno != e.lineno:
             return True, code
     return False, orig_code
@@ -187,13 +193,17 @@ def fix_ast_errors(code, max_attempts=100, expandtabs=True, delete_on_error=True
         try:
             ast.parse(code)
             break
-        except SyntaxError as e:
+        except Exception as e:
             error = e
-            print("SYNTAX ERROR: {}".format(e))
-            print("CODE:\n---\n{}\n---\n".format(code))
+            #print("ERROR: {}".format(e))
+            #print("CODE:\n---\n{}\n---\n".format(code))
             if "expected ':'" in e.msg:
                 r, code = try_adding_colon(code, e)
                 if r: continue
+            elif "expected an indented block" in e.msg:
+                try_indent = True
+            elif "unexpected indent" in e.msg or "unindent does not match" in e.msg:
+                try_unindent = True
             elif "was never closed" in e.msg:
                 close_delim = parse_unbalanced_paren(e.msg)
                 if close_delim:
@@ -203,20 +213,9 @@ def fix_ast_errors(code, max_attempts=100, expandtabs=True, delete_on_error=True
                 closing, opening = extract_mismatched_delimiters(e.msg)
                 r, code = try_replacing_closing_with_opening(code, e, closing, flip_opening_delimiters(opening))
                 if r: continue
-        except IndentationError as e:
-            error = e
-            print("INDENT ERROR: {}".format(e))
-            print("CODE:\n---\n{}\n---\n".format(code))
-            if "expected an indented block" in e.msg:
+            else:
                 try_indent = True
-            elif "unexpected indent" in e.msg or "unindent does not match" in e.msg:
                 try_unindent = True
-        except Exception as e:
-            error = e
-            try_indent = True
-            try_unindent = True
-            print("OTHER ERROR: {}".format(e))
-            print("CODE:\n---\n{}\n---\n".format(code))
 
         if error is None:
             break
@@ -232,7 +231,7 @@ def fix_ast_errors(code, max_attempts=100, expandtabs=True, delete_on_error=True
         if not delete_on_error:
             break
 
-        print("FAILED TO FIX ERROR: {}".format(error))
+        #print("FAILED TO FIX ERROR: {}".format(error))
 
         # Delete the line that caused the error
         lines = code.split('\n')
