@@ -62,7 +62,7 @@ def generate_and_write_function(function_name, sources_dirname, comments, protot
 
 def generate_pytest_script(comments, sources_dirname, function_name, prototype, node="localhost", port=5000, temperature=1.0, max_tokens=1024, variation=0):
     logging.info("Generating a candidate pytest script...")
-    test_code = auto_pytest(comments, sources_dirname, function_name, prototype, node=node, port=port, temperature=temperature, max_tokens=max_tokens)
+    test_code = auto_pytest(comments, prototype, node=node, port=port, temperature=temperature, max_tokens=max_tokens)
 
     logging.debug(f"Test code:\n{test_code}\n")
     write_script_to_disk(test_code, sources_dirname, function_name, is_test=True, variation=variation)
@@ -75,15 +75,15 @@ def main(args):
     logging.info(f"Function prototype: {args.prototype}")
     logging.info(f"Function name: {function_name}")
 
-    generate_and_write_function(function_name, args.sources_dirname, comments, args.prototype, args.node, args.port)
-    generate_pytest_script(comments, args.sources_dirname, function_name, args.prototype, args.node, args.port)
-
     successes = 0
     tries = 0
 
     logging.info("Creating docker executor...")
 
     executor = DockerExecute(sources_dirname=args.sources_dirname)
+
+    variation = 0
+    test_variation = 0
 
     while True:
         tries += 1
@@ -92,14 +92,10 @@ def main(args):
 
         # Generate code and test in parallel
 
-        variation = 0
-
         for i in range(2):
             code_process = multiprocessing.Process(target=generate_and_write_function, args=(function_name, args.sources_dirname, comments, args.prototype, args.node, args.port, args.temperature, args.max_tokens, variation))
             code_process.start()
             variation += 1
-
-        test_variation = 0
 
         for i in range(2):
             test_process = multiprocessing.Process(target=generate_pytest_script, args=(comments, args.sources_dirname, function_name, args.prototype, args.node, args.port, args.temperature, args.max_tokens, variation))

@@ -21,6 +21,8 @@ def benchmark_docker_execute():
 
     docker_execute = DockerExecute(sources_dirname=sources_dirname)
 
+    print("Priming the pump...")
+
     # Prime the pump
     exit_code, output = docker_execute.execute(test_script)
     assert output == expected_output, f"Unexpected output: {output}"

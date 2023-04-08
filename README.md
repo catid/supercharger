@@ -6,6 +6,20 @@ Scripts are designed to run the Baize-30B model with 8-bit quantization on a clu
 
 ## Setup the environment
 
+Set up docker:
+
+```bash
+sudo apt install docker.io
+sudo usermod -aG docker $USER
+
+# Log out and back in here
+
+# Verify this command succeeds
+docker info
+```
+
+Set up this repo:
+
 ```bash
 git clone https://github.com/catid/supercharger
 cd ./supercharger/
@@ -16,7 +30,8 @@ conda activate supercharger
 # Update code and packages
 ./update.sh
 
-# Check to make sure everything works
+# Check to make sure everything works.  If these fail probably you need to reboot or something.
+./test_code_clean.sh
 ./test_model.sh
 ```
 

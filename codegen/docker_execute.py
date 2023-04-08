@@ -1,5 +1,6 @@
 import os
 import signal
+import logging
 
 import docker
 
