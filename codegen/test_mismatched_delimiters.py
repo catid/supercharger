@@ -1,6 +1,6 @@
 import unittest
 import ast
-from fix_mismatched_delimiters import fix_mismatched_delimiters
+from fix_ast_errors import fix_ast_errors
 
 class TestFixMismatchedDelimiters(unittest.TestCase):
     def check_syntax(self, code_string):
@@ -13,7 +13,7 @@ class TestFixMismatchedDelimiters(unittest.TestCase):
     def run_test_cases(self, test_cases, test_type):
         for i, (input_str, expected_output) in enumerate(test_cases):
             with self.subTest(input=input_str, expected=expected_output, test_type=test_type):
-                fixed_code = fix_mismatched_delimiters(input_str)
+                fixed_code = fix_ast_errors(input_str)
                 self.assertEqual(fixed_code, expected_output, msg=f"\n\nFailed test {i} in {test_type}. Expected output:\n\n{expected_output}\n\nGot:\n\n{fixed_code}\n\n")
                 self.assertTrue(self.check_syntax(fixed_code), msg=f"\n\nFailed test {i} in {test_type}. Syntax checker found a problem with the output: {fixed_code}")
 
@@ -72,6 +72,18 @@ class TestFixMismatchedDelimiters(unittest.TestCase):
             (
                 "if x == 2:\n    print(\"Hello, World!\"\nelse:\n    print(\"Goodbye, World!\")",
                 "if x == 2:\n    print(\"Hello, World!\")\nelse:\n    print(\"Goodbye, World!\")"
+            ),
+            (
+                "temp = {\n    \"a\": a,\n    \"b\": b\n}",
+                "temp = {\n    \"a\": a,\n    \"b\": b\n}"
+            ),
+            (
+                "def multiply(a, \\\n             b)\n    return a * b",
+                "def multiply(a, \\\n             b):\n    return a * b"
+            ),
+            (
+                "def divide(a,\n           b):\n    return a / b",
+                "def divide(a,\n           b):\n    return a / b"
             ),
         ]
 

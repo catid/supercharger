@@ -14,16 +14,22 @@ Sure!  Here's the code you requested:
 ```python
 import math
 
-def add(a, b):
+def add(a,     b):
+    temp = {
+        "a": a,
+        "b": b
+    }
     return a + b
 
 def subtract(a, b
 return a - b
 
-def multiply(a, b)
+def multiply(a, \\
+             b)
     return a * b
 
-def divide(a, b):
+def divide(a,
+           b):
     return a / b
 
 // Oh no the dumb AI typed something weird in here
@@ -86,6 +92,8 @@ def main():
     if not success:
         print("Code cleaning failed!")
         return
+
+    print(f"Cleaned code: {code}")
 
     # Add this call back into the code
     code += "\ndostuff()"
