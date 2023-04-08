@@ -61,7 +61,27 @@ def try_indenting(code, line_number, delta=1):
             return True, code
     return False, orig_code
 
-def fix_indentation_errors(code, max_attempts=100, expandtabs=True):
+def try_adding_colon(code, line_number):
+    orig_code = code
+
+    lines = code.split('\n')
+    error_line = lines[line_number - 1]
+
+    error_line += ":"
+
+    lines[line_number - 1] = error_line
+
+    code = '\n'.join(lines)
+
+    #print(f"MODIFIED CODE: {code}")
+
+    error_line = check_error_line(code)
+
+    if error_line is None or error_line != line_number:
+        return True, code
+    return False, orig_code
+
+def fix_ast_errors(code, max_attempts=100, expandtabs=True):
     median_tab_spaces = detect_median_indentation(code)
     if median_tab_spaces <= 1:
         median_tab_spaces = 4
@@ -74,6 +94,7 @@ def fix_indentation_errors(code, max_attempts=100, expandtabs=True):
     while attempts < max_attempts:
         try_indent = True
         try_unindent = True
+        try_colon = False
         lineno = 0
 
         try:
@@ -81,17 +102,32 @@ def fix_indentation_errors(code, max_attempts=100, expandtabs=True):
             break
         except SyntaxError as e:
             lineno = e.lineno
+            #print("SYNTAX ERROR: {}".format(e))
+            #print("CODE:\n---\n{}\n---\n".format(code))
+            if "expected ':'" in e.msg:
+                try_colon = True
+                try_unindent = False
+                try_indent = False
         except IndentationError as e:
             lineno = e.lineno
+            #print("INDENT ERROR: {}".format(e))
+            #print("CODE:\n---\n{}\n---\n".format(code))
             if "expected an indented block" in e.msg:
                 try_unindent = False
             elif "unexpected indent" in e.msg or "unindent does not match" in e.msg:
                 try_indent = False
         except Exception as e:
             lineno = e.lineno
+            #print("OTHER ERROR: {}".format(e))
+            #print("CODE:\n---\n{}\n---\n".format(code))
 
         if lineno == 0:
             break
+
+        if try_colon:
+            r, code = try_adding_colon(code, lineno)
+            if r:
+                continue
 
         if try_indent:
             r, code = try_indenting(code, lineno, delta=1)

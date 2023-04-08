@@ -12,9 +12,6 @@ class DockerExecute:
         self.container = None
 
     def is_valid_filename(self, filename):
-        """
-        Checks if the input filename is a valid filename for a file under `./sources/filename.py`
-        """
         filename = os.path.basename(filename)  # Get just the filename without any path components
         filename_without_ext = os.path.splitext(filename)[0]  # Get just the filename without the extension
 

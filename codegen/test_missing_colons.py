@@ -1,6 +1,6 @@
 import ast
 import unittest
-from fix_missing_colons import fix_missing_colons
+from fix_ast_errors import fix_ast_errors
 
 class TestAddMissingColons(unittest.TestCase):
     def check_syntax(self, code_string):
@@ -13,21 +13,21 @@ class TestAddMissingColons(unittest.TestCase):
     def run_test_cases(self, test_cases, test_type, syntax_check=True):
         for i, (input_str, expected_output) in enumerate(test_cases):
             with self.subTest(input=input_str, expected=expected_output, test_type=test_type):
-                fixed_code = fix_missing_colons(input_str)
+                fixed_code = fix_ast_errors(input_str)
                 self.assertEqual(fixed_code, expected_output, msg=f"\n\nFailed test {i} in {test_type}. Expected output:\n\n{expected_output}\n\nGot:\n\n{fixed_code}\n\n")
                 if syntax_check:
                     self.assertTrue(self.check_syntax(fixed_code), msg=f"\n\nFailed test {i} in {test_type}. Syntax checker found a problem with the output: {fixed_code}")
 
     def test_basic_cases(self):
         test_cases = [
-            ("def foo(x)", "def foo(x):"),
-            ("if x > 0", "if x > 0:"),
-            ("elif x < 0", "elif x < 0:"),
-            ("else", "else:"),
-            ("for i in range(10)", "for i in range(10):"),
-            ("while True", "while True:"),
-            ("with open('file.txt') as f", "with open('file.txt') as f:"),
-            ("class MyClass", "class MyClass:"),
+            ("def foo(x)\n    pass", "def foo(x):\n    pass"),
+            ("if x > 0\n    pass\nelif x < 0\n    pass", "if x > 0:\n    pass\nelif x < 0:\n    pass"),
+            ("if x > 0\n    pass\nelse\n    pass", "if x > 0:\n    pass\nelse:\n    pass"),
+            ("for i in range(10)\n    pass", "for i in range(10):\n    pass"),
+            ("while True\n    pass", "while True:\n    pass"),
+            ("with open('file.txt') as f\n    pass", "with open('file.txt') as f:\n    pass"),
+            ("class MyClass\n    def f():\n        pass", "class MyClass:\n    def f():\n        pass"),
+            ("print(f\"The area of a circle with radius {radius} is {area:.2f}\")", "print(f\"The area of a circle with radius {radius} is {area:.2f}\")")
         ]
 
         self.run_test_cases(test_cases, "Basic", syntax_check=False)

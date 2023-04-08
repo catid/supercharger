@@ -1,7 +1,7 @@
 import ast
 import unittest
 
-from fix_indentation_errors import fix_indentation_errors
+from fix_ast_errors import fix_ast_errors
 
 
 class TestFixIndentationErrors(unittest.TestCase):
@@ -170,7 +170,7 @@ def my_function(x,
     def test_fix_indentation(self):
         for index, code in enumerate(self.test_cases):
             with self.subTest(f"Test case {index}"):
-                fixed_code = fix_indentation_errors(code.strip())
+                fixed_code = fix_ast_errors(code.strip())
                 try:
                     ast.parse(fixed_code)
                 except Exception as e:
