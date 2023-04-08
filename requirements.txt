@@ -12,6 +12,7 @@ fastapi
 pydantic
 typing
 uvicorn
+aiohttp
 
 # Codegen dependencies
 pytest

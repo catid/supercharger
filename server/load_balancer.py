@@ -1,10 +1,10 @@
 import argparse
 import asyncio
 import random
-import requests
 import time
 import logging
 
+import aiohttp
 from fastapi import FastAPI, HTTPException, Request
 
 # Set up logging
@@ -15,6 +15,11 @@ app = FastAPI()
 nodes = []
 current_node = 0
 node_port = 5000
+
+async def fetch_node_data(session: aiohttp.ClientSession, url: str, data) -> dict:
+    async with session.post(url, json=data) as response:
+        response.raise_for_status()
+        return await response.json()
 
 @app.post("/ask")
 async def ask_endpoint(request: Request):
@@ -40,11 +45,13 @@ async def ask_endpoint(request: Request):
         try:
             logging.info(f"Trying on {node_url}")
             try_start_time = time.time()
-            response = requests.post(node_url, json=data)
-            response.raise_for_status()
+
+            async with aiohttp.ClientSession() as session:
+                response_data = await fetch_node_data(session, node_url, data)
+
             logging.info(f"Completed on {node_url} in {time.time() - try_start_time:.2f} seconds (overall delay: {time.time() - start_time:.2f} seconds)")
-            return response.json()
-        except requests.exceptions.RequestException:
+            return response_data
+        except (aiohttp.ClientError, aiohttp.ClientResponseError):
             logging.info(f"Node busy: {node_url}")
             pass
 

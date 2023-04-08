@@ -216,3 +216,175 @@ def test_is_prime():
     ]
 
     return create_conversation_template(messages, assistant_role=assistant_role, user_role=user_role)
+
+# This version has a history for python code analysis and improvement
+def ask_python_analyzer(code, user_role="Human", assistant_role="Analyst"):
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a Python conversation between {normalize_role(user_role)} and {normalize_role(assistant_role)}. {normalize_role(user_role)} and {normalize_role(assistant_role)} take turns chatting. {normalize_role(assistant_role)} always considers the previous query carefully and summarizes before responding. {normalize_role(assistant_role)} always provides valid Python code with improvements over the original."
+        },
+        {
+            "role": user_role,
+            "content": """Please analyze the following code and suggest a fixed or improved version of the code:
+```python
+# Add two numbers and return their sum
+def add_numbers(x, y):
+    return x + y * 2
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """It seems like there's a mistake in the given code. The code defines a function add_numbers(x, y) that takes two arguments, x and y. The function is supposed to add the two numbers and return their sum. However, the current implementation returns x plus two times y (i.e., x + 2*y), which is incorrect for the intended purpose.
+
+Here's the corrected version of the code:
+```python
+# Add two numbers and return their sum
+def add_numbers(x, y):
+    return x + y
+```
+
+Now, the function add_numbers(x, y) correctly adds x and y together and returns the sum.
+"""
+        },
+        {
+            "role": user_role,
+            "content": """Please analyze the following code and suggest a fixed or improved version of the code:
+```python
+# A function that checks if an integer is prime
+# Returns true or false
+def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    for i in range(2, int(n ** 0.4) + 1):
+        if n % i == 0:
+            return False
+    return True
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """The given code is intended to check if a number is prime. However, there's a mistake in the loop range. It uses n ** 0.4 instead of n ** 0.5 (square root of n) as the upper limit. Here's a fixed and improved version of the code:
+
+Here's the corrected version of the code:
+```python
+def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    for i in range(2, int(n ** 0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+```
+
+In this version, the function correctly checks for prime numbers by iterating up to the square root of n. This is an optimized approach since any factor larger than the square root would have a corresponding factor smaller than the square root, so it's not necessary to check beyond that point.
+"""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please analyze the following code and suggest a fixed or improved version of the code:
+```python
+{code}
+```"""
+        },
+    ]
+
+    return create_conversation_template(messages, assistant_role=assistant_role, user_role=user_role)
+
+# This version has a history for python test code analysis and improvement
+def ask_python_test_analyzer(comments, prototype, function_name, test_code, user_role="Human", assistant_role="Analyst"):
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a Python conversation between {normalize_role(user_role)} and {normalize_role(assistant_role)}. {normalize_role(user_role)} and {normalize_role(assistant_role)} take turns chatting. {normalize_role(assistant_role)} always considers the previous query carefully and summarizes before responding. {normalize_role(assistant_role)} always provides valid pytest Python code with improvements over the original."
+        },
+        {
+            "role": user_role,
+            "content": """Given description and prototype of add_nums function to test:
+```
+# Add two numbers and return their sum
+def add_nums(x, y):
+```
+
+Please analyze the following pytest code and suggest a fixed version of the pytest code that covers more scenarios:
+```python
+import pytest
+from add_nums import add_nums
+
+def test_add_nums_positive():
+    # Test case 1: adding two positive numbers
+    result = add_nums(2, 3)
+    assert result == 6
+
+def test_add_nums_negative():
+    # Test case 2: adding two negative numbers
+    result = add_nums(-2, -3)
+    assert result == -5
+
+def test_add_nums_mixed():
+    # Test case 3: adding a positive and a negative number
+    result = add_nums(2, -3)
+    assert result == -1
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """The given pytest code has a minor issue in the first test case, where it asserts the result to be 6 instead of 5. Also, it's a good idea to add more test cases to cover additional scenarios. Here's a fixed and improved version of the pytest code:
+```python
+import pytest
+from add_nums import add_nums
+
+def test_add_nums_positive():
+    # Test case 1: adding two positive numbers
+    result = add_nums(2, 3)
+    assert result == 5
+
+def test_add_nums_negative():
+    # Test case 2: adding two negative numbers
+    result = add_nums(-2, -3)
+    assert result == -5
+
+def test_add_nums_mixed():
+    # Test case 3: adding a positive and a negative number
+    result = add_nums(2, -3)
+    assert result == -1
+
+def test_add_nums_zero():
+    # Test case 4: adding zero to a positive number
+    result = add_nums(0, 3)
+    assert result == 3
+
+    # Test case 5: adding zero to a negative number
+    result = add_nums(0, -3)
+    assert result == -3
+
+    # Test case 6: adding two zeros
+    result = add_nums(0, 0)
+    assert result == 0
+
+def test_add_nums_large():
+    # Test case 7: adding large numbers
+    result = add_nums(100000, 200000)
+    assert result == 300000
+
+```
+
+Now, the function add_numbers(x, y) correctly adds x and y together and returns the sum.
+"""
+        },
+        {
+            "role": user_role,
+            "content": f"""Given description and prototype of {function_name} function to test:
+```python
+{comments}
+{prototype}
+```
+
+Please analyze the following pytest code and suggest a fixed version of the pytest code that covers more scenarios:
+```python
+{test_code}
+```"""
+        },
+    ]
+
+    return create_conversation_template(messages, assistant_role=assistant_role, user_role=user_role)

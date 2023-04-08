@@ -3,9 +3,9 @@ import os
 import multiprocessing
 import logging
 import argparse
+import shutil
 
-from auto_pyfunc import auto_pyfunc
-from auto_pytest import auto_pytest
+from autopy import autopy_func, autopy_func_improve, autopy_test, autopy_test_improve
 from docker_execute import DockerExecute
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +22,11 @@ def comment_multiline_string(s: str) -> str:
             commented_line = line
         commented_lines.append(commented_line)
     return "\n".join(commented_lines)
+
+def ensure_colon_at_end(prototype: str) -> str:
+    if not prototype.endswith(':'):
+        prototype += ':'
+    return prototype
 
 def extract_function_name(function_def):
     # Split the function definition by whitespace
@@ -43,7 +48,7 @@ def get_script_name_from_function_name(function_name, is_test=False, variation=0
     else:
         return f"{function_name}_{variation}.py"
 
-def write_script_to_disk(script_string, sources_dirname, func_name, is_test=False, variation=0):
+def write_script_to_disk(code, sources_dirname, func_name, is_test=False, variation=0):
     # Create the directory if it doesn't exist
     dir_path = os.path.join(sources_dirname, func_name)
     os.makedirs(dir_path, exist_ok=True)
@@ -51,73 +56,134 @@ def write_script_to_disk(script_string, sources_dirname, func_name, is_test=Fals
     # Write the script to the file
     file_path = os.path.join(dir_path, get_script_name_from_function_name(func_name, is_test, variation))
     with open(file_path, "w") as f:
-        f.write(script_string)
+        f.write(code)
 
-def generate_and_write_function(function_name, sources_dirname, comments, prototype, node="localhost", port=5000, temperature=1.0, max_tokens=1024, variation=0):
-    logging.info("Generating a candidate function...")
-    code = auto_pyfunc(comments, prototype, node=node, port=port, temperature=temperature, max_tokens=max_tokens)
+def copy_and_run_pytest(source_dir, function_name, variation, test_variation, executor):
+    source_file = os.path.join(source_dir, function_name, f"{function_name}_{variation}.py")
+    test_source_file = os.path.join(source_dir, function_name, f"test_{function_name}_{test_variation}.py")
 
-    logging.debug(f"Candidate code:\n{code}\n")
-    write_script_to_disk(code, sources_dirname, function_name, is_test=False, variation=variation)
+    dest_file = os.path.join(source_dir, function_name, f"{function_name}.py")
+    test_dest_file = os.path.join(source_dir, function_name, f"test_{function_name}.py")
 
-def generate_pytest_script(comments, sources_dirname, function_name, prototype, node="localhost", port=5000, temperature=1.0, max_tokens=1024, variation=0):
-    logging.info("Generating a candidate pytest script...")
-    test_code = auto_pytest(comments, prototype, node=node, port=port, temperature=temperature, max_tokens=max_tokens)
+    # Copy files
+    shutil.copyfile(source_file, dest_file)
+    shutil.copyfile(test_source_file, test_dest_file)
 
-    logging.debug(f"Test code:\n{test_code}\n")
-    write_script_to_disk(test_code, sources_dirname, function_name, is_test=True, variation=variation)
+    # Run pytest command
+    test_script_name = test_dest_file
+    command = f"pytest {test_script_name}"
+    exit_code, logs = executor.execute(script_filename=test_script_name, command=command)
+
+    return exit_code, logs
+
+def code_generating_worker(queue, args, write_code=True, write_test=True):
+    while True:
+        if write_code:
+            logging.info("Generating code...")
+            code = autopy_func(args.comments, args.prototype, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+
+            if len(code) > 0:
+                queue.put(("code", code))
+
+        if write_test:
+            logging.info("Generating test...")
+            test = autopy_test(args.comments, args.prototype, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+
+            if len(test) > 0:
+                queue.put(("test", test))
+
+        if write_code and len(code) > 0:
+            logging.info("Improving code...")
+            code = autopy_func_improve(args.comments, code, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+
+            if len(code) > 0:
+                queue.put(("code", code))
+
+        if write_test and len(test) > 0:
+            logging.info("Improving test...")
+            test = autopy_test_improve(args.comments, args.prototype, args.function_name, test, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+
+            if len(test) > 0:
+                queue.put(("test", test))
+
+def launch_workers(queue, args):
+    workers = []
+
+    if args.workers == 1:
+        write_code = True
+        write_test = True
+        p = multiprocessing.Process(target=code_generating_worker, args=(queue, args, write_code, write_test))
+        p.start()
+        workers.append(p)
+    else:
+        for i in range(args.workers):
+            write_code = (i % 2) == 0
+            write_test = (i % 2) == 1
+            p = multiprocessing.Process(target=code_generating_worker, args=(queue, args, write_code, write_test))
+            p.start()
+            workers.append(p)
+
+def terminate_workers(workers):
+    for worker in workers:
+        worker.terminate()
+
+def write_code(args):
+    logging.info("Setting up...")
+
+    queue = multiprocessing.Queue()
+    docker_execute = DockerExecute(sources_dirname=args.sources_dirname)
+
+    logging.info("Starting background workers...")
+
+    workers = launch_workers(queue, args)
+
+    logging.info("Waiting for first result...")
+
+    code_variation = 0
+    test_variation = 0
+    codes = []
+    tests = []
+
+    try:
+        while True:
+            (type, code) = queue.get()
+
+            if type == "code":
+                logging.info(f"Got code {code_variation}")
+                codes.append(code)
+                write_script_to_disk(code, args.sources_dirname, args.function_name, is_test=False, variation=code_variation)
+
+                for i, _ in enumerate(tests):
+                    exit_code, logs = copy_and_run_pytest(args.sources_dirname, args.function_name, code_variation, i, docker_execute)
+                    if exit_code == 0:
+                        logging.info("Test passed: code {code_variation} <-> test {i}")
+                    # FIXME: Use the logs to help improve things
+
+                code_variation += 1
+            elif type == "test":
+                logging.info(f"Got test {test_variation}")
+                tests.append(code)
+                write_script_to_disk(code, args.sources_dirname, args.function_name, is_test=True, variation=test_variation)
+
+                for i, _ in enumerate(codes):
+                    exit_code, logs = copy_and_run_pytest(args.sources_dirname, args.function_name, i, test_variation, docker_execute)
+                    if exit_code == 0:
+                        logging.info("Test passed: code {i} <-> test {test_variation}")
+                    # FIXME: Use the logs to help improve things
+
+                test_variation += 1
+
+    except Exception as e:
+        logging.error(f"Exception in run_queue: {e}")
+    finally:
+        terminate_workers(workers)
 
 def main(args):
-    comments = comment_multiline_string(args.comments)
-    function_name = extract_function_name(args.prototype)
-
-    logging.info(f"Input comments: {comments}")
+    logging.info(f"Input comments: {args.comments}")
     logging.info(f"Function prototype: {args.prototype}")
-    logging.info(f"Function name: {function_name}")
+    logging.info(f"Function name: {args.function_name}")
 
-    successes = 0
-    tries = 0
-
-    logging.info("Creating docker executor...")
-
-    executor = DockerExecute(sources_dirname=args.sources_dirname)
-
-    variation = 0
-    test_variation = 0
-
-    while True:
-        tries += 1
-
-        logging.info("Generating code and test...")
-
-        # Generate code and test in parallel
-
-        for i in range(2):
-            code_process = multiprocessing.Process(target=generate_and_write_function, args=(function_name, args.sources_dirname, comments, args.prototype, args.node, args.port, args.temperature, args.max_tokens, variation))
-            code_process.start()
-            variation += 1
-
-        for i in range(2):
-            test_process = multiprocessing.Process(target=generate_pytest_script, args=(comments, args.sources_dirname, function_name, args.prototype, args.node, args.port, args.temperature, args.max_tokens, variation))
-            test_process.start()
-            test_variation += 1
-
-        code_process.join()
-        test_process.join()
-
-        break
-
-        code_script_name = get_script_name_from_function_name(function_name, is_test=False, variation=variation)
-        test_script_name = get_script_name_from_function_name(function_name, is_test=True, variation=variation)
-
-        command = f"pytest {test_script_name}"
-        exit_code, logs = executor.execute(script_filename=test_script_name, command=command)
-
-        if exit_code == 0:
-            successes += 1
-            logging.info(f"Tests passed: {successes}/{tries} (success rate = {successes*100.0/tries}%)")
-        else:
-            logging.info(f"Tests failed: {successes}/{tries} (success rate = {successes*100.0/tries}%)")
+    write_code(args)
 
 
 if __name__ == "__main__":
@@ -129,7 +195,12 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8000, help="Port number of the OpenAI GPT server.")
     parser.add_argument("--temperature", type=float, default=1.0, help="Temperature parameter for the OpenAI GPT server.")
     parser.add_argument("--max-tokens", type=int, default=1024, help="Maximum number of tokens in the generated code.")
+    parser.add_argument("--workers", type=int, default=4, help="Number of worker machines when using a load balancer in front of a cluster of worker nodes.")
 
     args = parser.parse_args()
+
+    args.comments = comment_multiline_string(args.comments)
+    args.prototype = ensure_colon_at_end(args.prototype)
+    args.function_name = extract_function_name(args.prototype)
 
     main(args)

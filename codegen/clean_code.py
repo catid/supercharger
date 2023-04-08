@@ -29,7 +29,32 @@ def only_defs_and_imports(code_string, func_name_to_exclude=None):
 
     return ast.unparse(filtered_nodes)
 
-def clean_code(code, strip_md=True, strip_globals=True):
+def remove_comments_before_first_function(script):
+    # Match function definition pattern
+    function_pattern = re.compile(r'^def .*\(', re.MULTILINE)
+    
+    # Find the index of the first function definition
+    match = function_pattern.search(script)
+    if match:
+        start_index = match.start()
+    else:
+        # If there's no function definition, return the original script
+        return script
+    
+    # Remove line comments
+    line_comment_pattern = re.compile(r'(?<=\n)#.*\n', re.MULTILINE)
+    clean_script = line_comment_pattern.sub('\n', script[:start_index])
+
+    # Remove multi-line comments
+    multiline_comment_pattern = re.compile(r'("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')', re.MULTILINE)
+    clean_script = multiline_comment_pattern.sub('', clean_script)
+
+    # Add the remaining script after the first function definition
+    clean_script += script[start_index:]
+
+    return clean_script
+
+def clean_code(code, strip_md=True, strip_globals=True, strip_leading_comments=False):
 
     #print(f"CODE:\n\n----\n{code}\n----\n\n")
 
@@ -55,6 +80,14 @@ def clean_code(code, strip_md=True, strip_globals=True):
             logging.info(f"clean_code::only_defs_and_imports failed due to exception: {e}")
 
     #print(f"only_defs_and_imports:\n\n----\n{code}\n----\n\n")
+
+    if strip_leading_comments:
+        try:
+            code = remove_comments_before_first_function(code)
+        except Exception as e:
+            logging.info(f"clean_code::remove_comments_before_first_function failed due to exception: {e}")
+
+    #print(f"remove_comments_before_first_function:\n\n----\n{code}\n----\n\n")
 
     try:
         code, _ = FormatCode(code)
