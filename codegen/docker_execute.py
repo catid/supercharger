@@ -22,7 +22,9 @@ class DockerExecute:
         expected_filename = f"{filename_without_ext}.py"
         return os.path.exists(os.path.join(self.full_source_path, expected_filename))
 
-    def init(self):
+    def recreate_container(self):
+        self.shutdown()
+
         # Pull the Python image
         self.client.images.pull(self.image)
 
@@ -36,7 +38,7 @@ class DockerExecute:
                     'mode': 'ro'
                     }
                 },
-            working_dir=self.full_source_path,
+            working_dir=f"/{self.sources_dirname}",
             stderr=True,
             stdout=True,
             detach=True,
@@ -69,7 +71,10 @@ class DockerExecute:
                 command = f"python {script_filename}"
 
             # Run the test code in the existing container
-            exit_code, output = self.container.exec_run(command)
+            exit_code, output = self.container.exec_run(
+                command,
+                workdir=f"/{self.sources_dirname}",
+            )
 
             # Disable the signal alarm after the code has finished executing
             signal.alarm(0)

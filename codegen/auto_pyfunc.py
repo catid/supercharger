@@ -10,10 +10,10 @@ def ask_llm_for_function(comments, prototype):
     messages = [
         {
             "role": "system",
-            "content": "You are helpful AI assistant trained to write Python functions for Human given comments and prototype."
+            "content": "The following is a conversation between Joe and Coder. Joe and Coder take turns chatting. Coder always considers responses carefully and thinks step by step before answering. Coder always writes syntactically correct Python code."
         },
         {
-            "role": "Human",
+            "role": "Joe",
             "content": "# Add two numbers and return their sum\ndef add_nums(x, y)"
         },
         {

@@ -1,0 +1,4 @@
+gpu3.lan
+gpu4.lan
+gpu5.lan
+gpu6.lan

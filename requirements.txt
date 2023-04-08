@@ -1,2 +1,19 @@
-fschat
+# Model dependencies
 flask
+torch
+git+https://github.com/huggingface/peft.git
+git+https://github.com/huggingface/transformers.git
+sentencepiece
+accelerate
+bitsandbytes
+
+# Server dependencies
+fastapi
+pydantic
+typing
+uvicorn
+
+# Codegen dependencies
+pytest
+docker
+yapf

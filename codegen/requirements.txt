@@ -1,4 +1,0 @@
-pytest
-docker
-autopep8
-black
