@@ -86,10 +86,20 @@ def main():
         print("Code cleaning failed!")
         return
 
+    # Add this call back into the code
+    code += "\ndostuff()"
+
     # Test script file name to execute in the Docker container
     sources_dirname = "test_sources"
     test_script = "test_script.py"
-    expected_output = "Hello, Docker!"
+    expected_output = """5 + 2 = 7
+5 - 2 = 3
+5 * 2 = 10
+5 / 2 = 2.5
+The area of a circle with radius 3 is 28.27
+The square root of 49 is 7.0
+The maximum value in the list is 91
+7 is a prime number"""
 
     script_path = os.path.join(os.getcwd(), sources_dirname, test_script)
     os.makedirs(os.path.join(os.getcwd(), sources_dirname), exist_ok=True)
@@ -108,6 +118,8 @@ def main():
 
     # Remove the test script file
     os.remove(script_path)
+
+    print("Success!  Script now runs and prints the expected output.")
 
 if __name__ == "__main__":
     main()
