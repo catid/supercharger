@@ -29,7 +29,7 @@ conda activate supercharger
 ./update.sh
 
 # Run the server
-./server.sh
+./run_server.sh
 ```
 
 ## Test the inference server
@@ -59,4 +59,5 @@ When running a client, specify the load balancer port 8000 instead of 5000 to us
 ## Test codegen
 
 ```bash
+python codegen/test_codegen.py
 ```
