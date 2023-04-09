@@ -1,8 +1,18 @@
 # supercharger
 
-Leverage locally-hosted LLMs to write software for you.
+Leverage locally-hosted Large Language Models to write software + unit tests for you.
 
-Scripts are designed to run the Baize-30B model with 8-bit quantization on a cluster of multiple Linux servers each with two 3090 or 4090 GPUs using model parallelism.  Code generation takes advantage of parallelism by writing candidate code and unit tests on separate workers.
+Scripts are designed to run the Baize-30B model with 8-bit quantization on a cluster of multiple Linux servers each with two 3090 or 4090 GPUs using model parallelism.
+
+Interesting features:
+
+* Prompt engineering specifically for code, test, and evaluation.
+* Generates multiple code and unit tests for a given function signature, and tries any combination of them until one code+test pair passes.
+* Uses an evaluator to determine when the generated code is good enough to stop.
+* Unit tested thorough code cleaning to remove unwanted artifacts from the model output.
+* Executes the candidate code tests in a virtual machine to ensure it is safe.
+* Uses a load balancer to distribute work across multiple worker nodes.
+
 
 ## Setup the environment
 
@@ -35,7 +45,7 @@ conda activate supercharger
 ./test_model.sh
 ```
 
-## Run an inference server
+## Run an worker server
 
 ```bash
 conda activate supercharger
@@ -47,7 +57,7 @@ conda activate supercharger
 ./run_server.sh
 ```
 
-## Test the inference server
+## Test the worker server
 
 ```bash
 conda activate supercharger
@@ -73,6 +83,27 @@ When running a client, specify the load balancer port 8000 instead of 5000 to us
 
 ## Test codegen
 
+If you have one worker node:
+
+```bash
+python codegen/codegen.py --workers 1 --node localhost --port 5000
+```
+
+If you are using the load balancer on localhost:
+
 ```bash
 python codegen/codegen.py
 ```
+
+Results will be summarized on the console as they come in, and you can review the generated code under `./sources/`
+
+The codegen script will stop when a generated function passes a generated unit test, and an evaluator oracle deems that the quality of the code is sufficient to stop.
+
+
+## Future work
+
+Some ideas for ways to take this further:
+
+* Fine-tune the temperature, context-length, and max-tokens parameters to improve success rate.
+* Check if we can use smaller, faster models to improve code generation speed.
+* Use OpenAI API for some of the tasks in a hybrid of free + paid models.

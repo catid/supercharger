@@ -37,10 +37,11 @@ def create_conversation_template(messages, default_template=None, user_role="Hum
 
 # This version has a history for the assistant role
 def ask_assistant(messages, user_role="Human", assistant_role="Assistant"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
     template = [
         {
             "role": "System",
-            "content": f"The following is a conversation between {normalize_role(user_role)} and {normalize_role(assistant_role)}. {normalize_role(user_role)} and {normalize_role(assistant_role)} take turns chatting. {normalize_role(assistant_role)} is a helpful AI assistant. {normalize_role(assistant_role)} always considers responses carefully and thinks step by step before answering."
+            "content": f"The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} is a helpful AI assistant. {assistant_role} always considers responses carefully and thinks step by step before answering."
         },
         {
             "role": user_role,
@@ -70,10 +71,11 @@ Microorganisms play vital roles in many ecosystems, such as decomposing organic 
 
 # This version has a history for python code generation
 def ask_python_coder(messages, user_role="Human", assistant_role="Coder"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
     template = [
         {
             "role": "System",
-            "content": f"The following is a Python conversation between {normalize_role(user_role)} and {normalize_role(assistant_role)}. {normalize_role(user_role)} and {normalize_role(assistant_role)} take turns chatting. {normalize_role(assistant_role)} always considers responses carefully and thinks step by step before answering. {normalize_role(assistant_role)} always writes syntactically correct Python code."
+            "content": f"The following is a Python conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers responses carefully and thinks step by step before answering. {assistant_role} always writes syntactically correct Python code."
         },
         {
             "role": user_role,
@@ -103,6 +105,7 @@ def is_even(x):
 
 # Generate a python function with a specific prototype
 def ask_python_function_prototype(comments, prototype, user_role="Human", assistant_role="Coder"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
     messages = [
         {
             "role": "system",
@@ -156,14 +159,15 @@ def is_prime(n: int) -> bool:
 
 # Generate a python unit test for a function with a specific prototype
 def ask_python_pytest_prototype(comments, prototype, user_role="Human", assistant_role="Coder"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
     messages = [
         {
             "role": "system",
-            "content": "The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers responses carefully and thinks step by step before answering with a Python program using pytest to exercise the given function. {assistant_role} always writes syntactically correct Python code using pytest."
+            "content": f"The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers responses carefully and thinks step by step before answering with a Python program using pytest to exercise the given function. {assistant_role} always writes syntactically correct Python code using pytest."
         },
         {
             "role": user_role,
-            "content": "# Add two numbers and return their sum\ndef add_nums(x, y)"
+            "content": "# Add two numbers and return their sum\ndef add_nums(x, y):"
         },
         {
             "role": assistant_role,
@@ -189,7 +193,7 @@ def test_add_nums_mixed():
         },
         {
             "role": user_role,
-            "content": "# A function that checks if an integer is prime\n# Returns true or false\ndef is_prime(n)"
+            "content": "# A function that checks if an integer is prime\n# Returns true or false\ndef is_prime(n):"
         },
         {
             "role": assistant_role,
@@ -219,10 +223,11 @@ def test_is_prime():
 
 # This version has a history for python code analysis and improvement
 def ask_python_analyzer(code, user_role="Human", assistant_role="Analyst"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
     messages = [
         {
             "role": "System",
-            "content": f"The following is a Python conversation between {normalize_role(user_role)} and {normalize_role(assistant_role)}. {normalize_role(user_role)} and {normalize_role(assistant_role)} take turns chatting. {normalize_role(assistant_role)} always considers the previous query carefully and summarizes before responding. {normalize_role(assistant_role)} always provides valid Python code with improvements over the original."
+            "content": f"The following is a Python conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully and summarizes before responding. {assistant_role} always provides valid Python code with improvements over the original."
         },
         {
             "role": user_role,
@@ -293,10 +298,11 @@ In this version, the function correctly checks for prime numbers by iterating up
 
 # This version has a history for python test code analysis and improvement
 def ask_python_test_analyzer(comments, prototype, function_name, test_code, user_role="Human", assistant_role="Analyst"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
     messages = [
         {
             "role": "System",
-            "content": f"The following is a Python conversation between {normalize_role(user_role)} and {normalize_role(assistant_role)}. {normalize_role(user_role)} and {normalize_role(assistant_role)} take turns chatting. {normalize_role(assistant_role)} always considers the previous query carefully and summarizes before responding. {normalize_role(assistant_role)} always provides valid pytest Python code with improvements over the original."
+            "content": f"The following is a Python conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully and summarizes before responding. {assistant_role} always provides valid pytest Python code with improvements over the original."
         },
         {
             "role": user_role,

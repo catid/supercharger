@@ -26,37 +26,36 @@ def autopy_func(comments, prototype, node="localhost", port=5000, temperature=1.
 
     #logging.info(f"autopy_func: code = \n{code}")
 
-    if len(code) > 0:
+    if len(code.strip()) > 0:
         # Prepend the comments
         code = '\n'.join(comments.splitlines() + code.splitlines())
 
     return code
 
 def autopy_func_improve(comments, code, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
-    #logging.info(f"autopy_func_analyze: comments_and_code = `{comments_and_code}`")
+    logging.info(f"autopy_func_analyze: comments = `{comments}`, prototype = `{code}`")
 
     prompt, stop_strs = ask_python_analyzer(code)
 
-    #logging.info(f"autopy_func_analyze: prompt = \n{prompt}")
-    #logging.info(f"autopy_func_analyze: stop_strs = {stop_strs}")
+    logging.info(f"autopy_func_analyze: prompt = \n{prompt}")
+    logging.info(f"autopy_func_analyze: stop_strs = {stop_strs}")
 
     result = ask_server(prompt, stop_strs, node, port, temperature, max_tokens)
 
-    #logging.info(f"autopy_func_analyze: result = \n{result}")
+    logging.info(f"autopy_func_analyze: result = \n{result}")
 
     code, _ = clean_code(result, strip_leading_comments=True)
 
-    #logging.info(f"autopy_func_analyze: code = \n{code}")
+    logging.info(f"autopy_func_analyze: code = \n{code}")
 
-    if len(code) > 0:
+    if len(code.strip()) > 0:
         # Prepend the comments
         code = '\n'.join(comments.splitlines() + code.splitlines())
 
     return code
 
 def autopy_test(comments, prototype, function_name, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
-    #logging.debug(f"autopy_test: comments = `{comments}`")
-    #logging.debug(f"autopy_test: prototype = `{prototype}`")
+    #logging.info(f"autopy_test: comments = `{comments}`, prototype = `{prototype}`")
 
     prompt, stop_strs = ask_python_pytest_prototype(comments, prototype)
 
@@ -71,7 +70,7 @@ def autopy_test(comments, prototype, function_name, node="localhost", port=5000,
 
     #logging.debug(f"autopy_test: code = \n{code}")
 
-    if len(code) > 0:
+    if len(code.strip()) > 0:
         # Prepend the required imports
         required_imports = ["import pytest", f"from {function_name} import {function_name}"]
         code = '\n'.join(required_imports + code.splitlines())
@@ -79,7 +78,7 @@ def autopy_test(comments, prototype, function_name, node="localhost", port=5000,
     return code
 
 def autopy_test_improve(comments, prototype, function_name, test_code, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
-    #logging.info(f"autopy_test_analyze: comments_and_code = `{comments_and_code}`")
+    #logging.info(f"autopy_test_analyze: comments = `{comments}`, prototype = `{prototype}`")
 
     prompt, stop_strs = ask_python_test_analyzer(comments, prototype, function_name, test_code)
 
@@ -94,7 +93,7 @@ def autopy_test_improve(comments, prototype, function_name, test_code, node="loc
 
     #logging.info(f"autopy_test_analyze: code = \n{code}")
 
-    if len(code) > 0:
+    if len(code.strip()) > 0:
         # Prepend the required imports
         required_imports = ["import pytest", f"from {function_name} import {function_name}"]
         code = '\n'.join(required_imports + code.splitlines())

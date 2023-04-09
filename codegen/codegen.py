@@ -221,8 +221,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Automatically generate Python functions and their test scripts.")
     parser.add_argument("--sources-dirname", default="sources", help="Directory where the generated source files are stored.")
-    parser.add_argument("--comments", default="# A function that tests if a number is prime.", help="Comments describing the desired function.")
-    parser.add_argument("--prototype", default="def is_prime(n)", help="Prototype of the desired function.")
+    parser.add_argument("--comments", default="# A function that calculates the factorial of a given non-negative integer", help="Comments describing the desired function.")
+    parser.add_argument("--prototype", default="def factorial(n)", help="Prototype of the desired function.")
     parser.add_argument("--node", default="localhost", help="Hostname or IP address of the OpenAI GPT server.")
     parser.add_argument("--port", type=int, default=8000, help="Port number of the OpenAI GPT server.")
     parser.add_argument("--temperature", type=float, default=1.0, help="Temperature parameter for the OpenAI GPT server.")
