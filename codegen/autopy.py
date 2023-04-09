@@ -54,7 +54,7 @@ def autopy_func_improve(comments, code, node="localhost", port=5000, temperature
 
     return code
 
-def autopy_test(comments, prototype, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
+def autopy_test(comments, prototype, function_name, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
     #logging.debug(f"autopy_test: comments = `{comments}`")
     #logging.debug(f"autopy_test: prototype = `{prototype}`")
 
@@ -67,9 +67,14 @@ def autopy_test(comments, prototype, node="localhost", port=5000, temperature=1.
 
     #logging.info(f"autopy_test: result = \n{result}")
 
-    code, _ = clean_code(result, strip_globals=False)
+    code, _ = clean_code(result, strip_import_mods=["pytest"], strip_import_funcs=[function_name])
 
     #logging.debug(f"autopy_test: code = \n{code}")
+
+    if len(code) > 0:
+        # Prepend the required imports
+        required_imports = ["import pytest", f"from {function_name} import {function_name}"]
+        code = '\n'.join(required_imports + code.splitlines())
 
     return code
 
@@ -85,8 +90,13 @@ def autopy_test_improve(comments, prototype, function_name, test_code, node="loc
 
     #logging.info(f"autopy_test_analyze: result = \n{result}")
 
-    code, _ = clean_code(result, strip_globals=False)
+    code, _ = clean_code(result, strip_import_mods=["pytest"], strip_import_funcs=[function_name])
 
     #logging.info(f"autopy_test_analyze: code = \n{code}")
+
+    if len(code) > 0:
+        # Prepend the required imports
+        required_imports = ["import pytest", f"from {function_name} import {function_name}"]
+        code = '\n'.join(required_imports + code.splitlines())
 
     return code

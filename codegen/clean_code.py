@@ -8,7 +8,7 @@ from fix_ast_errors import fix_ast_errors
 from extract_code_from_md import extract_code_from_md
 
 # If you only expect a Python function and nothing else but imports this can clean the junk after syntax errors are cleaned up
-def only_defs_and_imports(code_string, func_name_to_exclude=None):
+def only_defs_and_imports(code_string, strip_import_mods=[], strip_import_funcs=[]):
     # This will fail if the input code is not valid Python
     tree = ast.parse(code_string)
     filtered_nodes = []
@@ -17,15 +17,16 @@ def only_defs_and_imports(code_string, func_name_to_exclude=None):
         if isinstance(node, ast.FunctionDef):
             filtered_nodes.append(node)
         elif isinstance(node, ast.Import):
-            filtered_names = [name for name in node.names if not (name.name.split('.')[0] == func_name_to_exclude)]
+            filtered_names = [name for name in node.names if not name.name in strip_import_mods]
             if filtered_names:
                 node.names = filtered_names
                 filtered_nodes.append(node)
         elif isinstance(node, ast.ImportFrom):
-            filtered_names = [name for name in node.names if name.name != func_name_to_exclude]
-            if filtered_names:
-                node.names = filtered_names
-                filtered_nodes.append(node)
+            if node.module not in strip_import_mods:
+                filtered_names = [name for name in node.names if not name.name in strip_import_funcs]
+                if filtered_names:
+                    node.names = filtered_names
+                    filtered_nodes.append(node)
 
     return ast.unparse(filtered_nodes)
 
@@ -54,7 +55,7 @@ def remove_comments_before_first_function(script):
 
     return clean_script
 
-def clean_code(code, strip_md=True, strip_globals=True, strip_leading_comments=False):
+def clean_code(code, strip_md=True, strip_globals=True, strip_leading_comments=False, strip_import_mods=[], strip_import_funcs=[]):
 
     #print(f"CODE:\n\n----\n{code}\n----\n\n")
 
@@ -75,7 +76,7 @@ def clean_code(code, strip_md=True, strip_globals=True, strip_leading_comments=F
 
     if strip_globals:
         try:
-            code = only_defs_and_imports(code)
+            code = only_defs_and_imports(code, strip_import_mods=strip_import_mods, strip_import_funcs=strip_import_funcs)
         except Exception as e:
             logging.info(f"clean_code::only_defs_and_imports failed due to exception: {e}")
 

@@ -88,7 +88,7 @@ def code_generating_worker(queue, args, write_code=True, write_test=True):
 
         if write_test:
             logging.info("Generating test...")
-            test = autopy_test(args.comments, args.prototype, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+            test = autopy_test(args.comments, args.prototype, args.function_name, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
 
             if len(test) > 0:
                 queue.put(("test", test))
@@ -134,17 +134,22 @@ def generate_requirements(project_path, output_file='requirements.txt'):
     if result.returncode == 0:
         return True
     else:
-        print(f"An error occurred while generating requirements.txt: {result}")
+        logging.info(f"An error occurred while generating requirements.txt: {result}")
         return False
 
 def install_container_requirements(sources_dirname, function_name, docker_execute):
+    logging.info("Installing container requirements.txt...")
+
     project_path = os.path.join(sources_dirname, function_name)
     success = generate_requirements(project_path, output_file=os.path.join(project_path, f"requirements.txt"))
 
     if success:
         exit_code, logs = docker_execute.execute(command=f"pip install -r {function_name}/requirements.txt")
         if exit_code != 0:
-            print(f"An error occurred while installing requirements.txt: exit_code={exit_code} logs={logs}")
+            logging.info(f"An error occurred while installing requirements.txt: exit_code={exit_code} logs={logs}")
+        else:
+            logging.info("Successfully installed container requirements.txt")
+
 
 def write_code(args):
     logging.info("Setting up...")
@@ -179,7 +184,7 @@ def write_code(args):
                     if exit_code == 0:
                         logging.info(f"Test passed: code {code_variation} <-> test {i}")
                     else:
-                        logging.info(f"Test failed: code {code_variation} <-> test {i}: exit_code={exit_code} logs={logs}")
+                        logging.info(f"Test failed: code {code_variation} <-> test {i}") #: exit_code={exit_code} logs={logs}")
                     # FIXME: Use the logs to help improve things
 
                 code_variation += 1
@@ -195,7 +200,7 @@ def write_code(args):
                     if exit_code == 0:
                         logging.info(f"Test passed: code {i} <-> test {test_variation}")
                     else:
-                        logging.info(f"Test failed: code {i} <-> test {test_variation}: exit_code={exit_code} logs={logs}")
+                        logging.info(f"Test failed: code {i} <-> test {test_variation}") #: exit_code={exit_code} logs={logs}")
                     # FIXME: Use the logs to help improve things
 
                 test_variation += 1
