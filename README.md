@@ -8,7 +8,7 @@ Interesting features:
 
 * Prompt engineering specifically for code, test, and evaluation.
 * Generates multiple code and unit tests for a given function signature, and tries any combination of them until one code+test pair passes.
-* Uses an evaluator to determine when the generated code is good enough to stop.
+* Uses an AI to score the code and tests to decide if they are good enough and to break ties.
 * Unit tested thorough code cleaning to remove unwanted artifacts from the model output.
 * Executes the candidate code tests in a virtual machine to ensure it is safe.
 * Uses a load balancer to distribute work across multiple worker nodes.

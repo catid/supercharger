@@ -3,10 +3,11 @@ import os, sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 
+import re
 import logging
 
 from server.client import ask_server
-from prompts.ask_templates import ask_python_pytest_prototype, ask_python_function_prototype, ask_python_analyzer, ask_python_test_analyzer
+from prompts.ask_templates import ask_python_pytest_prototype, ask_python_function_prototype, ask_python_analyzer, ask_python_test_analyzer, ask_python_test_judge, ask_python_code_judge
 from clean_code import clean_code
 
 def autopy_func(comments, prototype, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
@@ -99,3 +100,44 @@ def autopy_test_improve(comments, prototype, function_name, test_code, node="loc
         code = '\n'.join(required_imports + code.splitlines())
 
     return code
+
+def find_first_number_between_0_and_1(s: str):
+    pattern = r'(?<![0-9.])0(\.\d+)?(?!\d)|(?<![0-9.])1(\.\d+)?(?!\d)'
+    matches = re.finditer(pattern, s)
+    
+    for match in matches:
+        start_index = match.start()
+        if start_index == 0 or s[start_index - 1] != '-':
+            f = float(match.group())
+            if f >= 0 and f <= 1:
+                return f
+
+    return None
+
+def autopy_code_judge(commented_code, function_name, node="localhost", port=5000, temperature=0.5, max_tokens=32):
+    #logging.info(f"autopy_code_judge: comments = `{comments}`, prototype = `{prototype}`")
+
+    prompt, stop_strs = ask_python_code_judge(commented_code, function_name)
+
+    logging.info(f"autopy_code_judge: prompt = \n{prompt}")
+    logging.info(f"autopy_code_judge: stop_strs = {stop_strs}")
+
+    result = ask_server(prompt, stop_strs, node, port, temperature, max_tokens)
+
+    logging.info(f"autopy_code_judge: result = \n{result}")
+
+    return find_first_number_between_0_and_1(result)
+
+def autopy_test_judge(commented_code, function_name, test_code, node="localhost", port=5000, temperature=0.5, max_tokens=32):
+    #logging.info(f"autopy_test_judge: comments = `{comments}`, prototype = `{prototype}`")
+
+    prompt, stop_strs = ask_python_test_judge(commented_code, function_name, test_code)
+
+    logging.info(f"autopy_test_judge: prompt = \n{prompt}")
+    logging.info(f"autopy_test_judge: stop_strs = {stop_strs}")
+
+    result = ask_server(prompt, stop_strs, node, port, temperature, max_tokens)
+
+    logging.info(f"autopy_test_judge: result = \n{result}")
+
+    return find_first_number_between_0_and_1(result)

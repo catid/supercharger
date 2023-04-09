@@ -12,7 +12,7 @@ def normalize_role(role):
 def decorate_role(role):
     return f"[|{normalize_role(role)}|]"
 
-def create_conversation_template(messages, default_template=None, user_role="Human", assistant_role="Assistant"):
+def create_conversation_template(messages, default_template=None, custom_start="", user_role="Human", assistant_role="Assistant"):
     conversation = []
 
     if not has_system_role(messages) and default_template is not None:
@@ -27,7 +27,11 @@ def create_conversation_template(messages, default_template=None, user_role="Hum
         else:
             conversation.append(f"{decorate_role(role)}: {content}")
 
-    conversation.append(f"{decorate_role(assistant_role)}:")
+    if len(custom_start) > 0:
+        conversation.append(f"{decorate_role(assistant_role)}: {custom_start}")
+    else:
+        conversation.append(f"{decorate_role(assistant_role)}:")
+
     stop_strs = [
         f"{decorate_role(user_role)}:",
         f"{decorate_role(assistant_role)}:"
@@ -394,3 +398,112 @@ Please analyze the following pytest code and suggest a fixed version of the pyte
     ]
 
     return create_conversation_template(messages, assistant_role=assistant_role, user_role=user_role)
+
+# This version ranks the quality of python code
+def ask_python_code_judge(commented_code, function_name, user_role="Human", assistant_role="Judge"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a Python conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully. {assistant_role} always provides an expert rating from 0 to 1 of the provided Python code."
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following add_nums function from 0 to 1, where 0 means the code is not good and 1 means the code is good:
+```
+# Add two numbers and return their sum
+def add_nums(x, y):
+    return x + y
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rate the given add_nums function as 0.9. The code is simple, clean, and easy to understand. It performs the expected operation of adding two numbers together and returning their sum. However, the function could be improved with better documentation (for example, specifying input types and return type in a docstring)."""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please rank the following {function_name} function from 0 to 1, where 0 means the code is not good and 1 means the code is good:
+```python
+{commented_code}
+```"""
+        },
+    ]
+
+    custom_start = f"After careful consideration, I would rate the given {function_name} function as "
+
+    return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
+
+# This version ranks the quality of python test code
+def ask_python_test_judge(commented_code, function_name, test_code, user_role="Human", assistant_role="Judge"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a Python conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully. {assistant_role} always provides an expert rating from 0 to 1 of the provided Python code."
+        },
+        {
+            "role": user_role,
+            "content": """Given the add_nums function:
+```
+# Add two numbers and return their sum
+def add_nums(x, y):
+    return x + y
+```
+
+Please rank the following unit test code from 0 to 1, where 0 means the code is not good and 1 means the code is good:
+```python
+import pytest
+from add_nums import add_nums
+
+def test_add_nums_positive():
+    # Test case 1: adding two positive numbers
+    result = add_nums(2, 3)
+    assert result == 6
+
+def test_add_nums_negative():
+    # Test case 2: adding two negative numbers
+    result = add_nums(-2, -3)
+    assert result == -5
+
+def test_add_nums_mixed():
+    # Test case 3: adding a positive and a negative number
+    result = add_nums(2, -3)
+    assert result == -1
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given unit test code as 0.75 out of 1. The test cases cover different scenarios (adding two positive numbers, two negative numbers, and a positive and a negative number), which is good. However, there's an error in the first test case:
+```python
+def test_add_nums_positive():
+    # Test case 1: adding two positive numbers
+    result = add_nums(2, 3)
+    assert result == 6
+```
+The assertion should be assert result == 5 instead of assert result == 6. The correct version would be:
+```python
+def test_add_nums_positive():
+    # Test case 1: adding two positive numbers
+    result = add_nums(2, 3)
+    assert result == 5
+```
+After fixing this issue, the test code would be ranked as 1 out of 1, since it would be fully correct.
+"""
+        },
+        {
+            "role": user_role,
+            "content": f"""Given the {function_name} function:
+```python
+{commented_code}
+```
+
+Please rank the following unit test code from 0 to 1, where 0 means the code is not good and 1 means the code is good:
+```python
+{test_code}
+```"""
+        },
+    ]
+
+    custom_start = "After careful consideration, I would rank the given unit test code as "
+
+    return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
