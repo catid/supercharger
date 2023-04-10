@@ -34,20 +34,20 @@ def autopy_func(comments, prototype, node="localhost", port=5000, temperature=1.
     return code
 
 def autopy_func_improve(comments, code, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
-    logging.info(f"autopy_func_analyze: comments = `{comments}`, prototype = `{code}`")
+    #logging.info(f"autopy_func_improve: comments = `{comments}`, prototype = `{code}`")
 
     prompt, stop_strs = ask_python_analyzer(code)
 
-    logging.info(f"autopy_func_analyze: prompt = \n{prompt}")
-    logging.info(f"autopy_func_analyze: stop_strs = {stop_strs}")
+    #logging.info(f"autopy_func_improve: prompt = \n{prompt}")
+    #logging.info(f"autopy_func_improve: stop_strs = {stop_strs}")
 
     result = ask_server(prompt, stop_strs, node, port, temperature, max_tokens)
 
-    logging.info(f"autopy_func_analyze: result = \n{result}")
+    #logging.info(f"autopy_func_improve: result = \n{result}")
 
     code, _ = clean_code(result, strip_leading_comments=True)
 
-    logging.info(f"autopy_func_analyze: code = \n{code}")
+    #logging.info(f"autopy_func_improve: code = \n{code}")
 
     if len(code.strip()) > 0:
         # Prepend the comments
@@ -79,20 +79,20 @@ def autopy_test(comments, prototype, function_name, node="localhost", port=5000,
     return code
 
 def autopy_test_improve(comments, prototype, function_name, test_code, node="localhost", port=5000, temperature=1.0, max_tokens=1024):
-    #logging.info(f"autopy_test_analyze: comments = `{comments}`, prototype = `{prototype}`")
+    #logging.info(f"autopy_test_improve: comments = `{comments}`, prototype = `{prototype}`")
 
     prompt, stop_strs = ask_python_test_analyzer(comments, prototype, function_name, test_code)
 
-    #logging.info(f"autopy_test_analyze: prompt = \n{prompt}")
-    #logging.info(f"autopy_test_analyze: stop_strs = {stop_strs}")
+    #logging.info(f"autopy_test_improve: prompt = \n{prompt}")
+    #logging.info(f"autopy_test_improve: stop_strs = {stop_strs}")
 
     result = ask_server(prompt, stop_strs, node, port, temperature, max_tokens)
 
-    #logging.info(f"autopy_test_analyze: result = \n{result}")
+    #logging.info(f"autopy_test_improve: result = \n{result}")
 
     code, _ = clean_code(result, strip_import_mods=["pytest"], strip_import_funcs=[function_name])
 
-    #logging.info(f"autopy_test_analyze: code = \n{code}")
+    #logging.info(f"autopy_test_improve: code = \n{code}")
 
     if len(code.strip()) > 0:
         # Prepend the required imports
@@ -133,11 +133,11 @@ def autopy_test_judge(commented_code, function_name, test_code, node="localhost"
 
     prompt, stop_strs = ask_python_test_judge(commented_code, function_name, test_code)
 
-    logging.info(f"autopy_test_judge: prompt = \n{prompt}")
-    logging.info(f"autopy_test_judge: stop_strs = {stop_strs}")
+    #logging.info(f"autopy_test_judge: prompt = \n{prompt}")
+    #logging.info(f"autopy_test_judge: stop_strs = {stop_strs}")
 
     result = ask_server(prompt, stop_strs, node, port, temperature, max_tokens)
 
-    logging.info(f"autopy_test_judge: result = \n{result}")
+    #logging.info(f"autopy_test_judge: result = \n{result}")
 
     return find_first_number_between_0_and_1(result)

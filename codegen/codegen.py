@@ -133,8 +133,8 @@ class CodeGen:
         self.manager = JobManager(args)
 
     def add_code_or_test_job(self):
-        test_count = count_non_empty_strings(self.tests)
-        code_count = count_non_empty_strings(self.codes)
+        test_count = len(self.tests)
+        code_count = len(self.codes)
         logging.info(f"Now have {test_count} tests and {code_count} codes")
         if test_count > code_count:
             logging.info("Adding a job to write more code")
@@ -308,6 +308,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=1.0, help="Temperature parameter for the OpenAI GPT server.")
     parser.add_argument("--max-tokens", type=int, default=1024, help="Maximum number of tokens in the generated code.")
     parser.add_argument("--workers", type=int, default=4, help="Number of worker machines when using a load balancer in front of a cluster of worker nodes.")
+    parser.add_argument("--threshold", type=float, default=0.95, help="Minimum threshold of code correctness before stopping.")
 
     args = parser.parse_args()
 

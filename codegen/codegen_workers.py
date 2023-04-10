@@ -1,5 +1,6 @@
 import multiprocessing
 import logging
+import time
 from typing import List, Tuple, Any
 
 from autopy import autopy_func, autopy_func_improve, autopy_test, autopy_test_improve, autopy_code_judge, autopy_test_judge
@@ -9,56 +10,75 @@ class JobWorkers:
         self.workers = []
         self.args = args
 
+    def process_next(self, args, work_queue, result_queue):
+        (task_op, task_id, code, test) = work_queue.get()
+
+        if task_op == "code":
+            logging.info("Generating code...")
+            t0 = time.time()
+            code = autopy_func(args.comments, args.prototype, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+            t1 = time.time()
+
+            if len(code) > 0:
+                score = autopy_code_judge(code, args.function_name, node=args.node, port=args.port)
+            else:
+                score = 0
+            t2 = time.time()
+
+            logging.info(f"Generated code len={len(code)} in {t1 - t0} seconds, with score {score} (scored in {t2 - t1} seconds)")
+
+            result_queue.put((task_op, task_id, score, code))
+
+        elif task_op == "test":
+            logging.info("Generating test...")
+            t0 = time.time()
+            test = autopy_test(args.comments, args.prototype, args.function_name, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+            t1 = time.time()
+
+            logging.info(f"Generated test len={len(test)} in {t1 - t0} seconds")
+            result_queue.put((task_op, task_id, None, test))
+
+        elif task_op == "improve_code":
+            logging.info("Improving code...")
+            t0 = time.time()
+            improved_code = autopy_func_improve(args.comments, code, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+            t1 = time.time()
+
+            if len(improved_code) > 0:
+                score = autopy_code_judge(improved_code, args.function_name, node=args.node, port=args.port)
+            else:
+                score = 0
+            t2 = time.time()
+
+            logging.info(f"Generated improved code input len={len(code)} output len={len(improved_code)} in {t1 - t0} seconds, with new score {score} (scored in {t2 - t1} seconds)")
+            result_queue.put(("improve_code", task_id, score, improved_code))
+
+        elif task_op == "improve_test":
+            logging.info("Improving test...")
+            t0 = time.time()
+            improved_test = autopy_test_improve(args.comments, args.prototype, args.function_name, test, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
+            t1 = time.time()
+
+            logging.info(f"Generated improved test input len={len(test)} output len={len(improved_test)} in {t1 - t0} seconds")
+            result_queue.put((task_op, task_id, None, improved_test))
+
+        elif task_op == "judge_pair":
+            logging.info("Judging pair...")
+            t0 = time.time()
+            score = autopy_test_judge(code, args.function_name, test, node=args.node, port=args.port)
+            t1 = time.time()
+
+            logging.info(f"Judged code/test pair with score {score} in {t1 - t0} seconds")
+            result_queue.put((task_op, task_id, score, None))
+
     def worker(self, work_queue, result_queue):
         args = self.args
 
         while True:
-            (task_op, task_id, code, test) = work_queue.get()
-
-            if task_op == "code":
-                logging.info("Generating code...")
-                code = autopy_func(args.comments, args.prototype, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
-
-                if len(code) > 0:
-                    score = autopy_code_judge(code, args.function_name, node=args.node, port=args.port)
-                else:
-                    score = 0
-
-                logging.info(f"Generated code len={len(code)} with score {score}")
-                result_queue.put((task_op, task_id, score, code))
-
-            elif task_op == "test":
-                logging.info("Generating test...")
-                test = autopy_test(args.comments, args.prototype, args.function_name, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
-
-                logging.info(f"Generated test len={len(test)}")
-                result_queue.put((task_op, task_id, None, test))
-
-            elif task_op == "improve_code":
-                logging.info("Improving code...")
-                improved_code = autopy_func_improve(args.comments, code, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
-
-                if len(improved_code) > 0:
-                    score = autopy_code_judge(improved_code, args.function_name, node=args.node, port=args.port)
-                else:
-                    score = 0
-
-                logging.info(f"Generated improved code input len={len(code)} output len={len(improved_code)} with new score {score}")
-                result_queue.put(("improve_code", task_id, score, improved_code))
-
-            elif task_op == "improve_test":
-                logging.info("Improving test...")
-                improved_test = autopy_test_improve(args.comments, args.prototype, args.function_name, test, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
-
-                logging.info(f"Generated improved test input len={len(test)} output len={len(improved_test)}")
-                result_queue.put((task_op, task_id, None, improved_test))
-
-            elif task_op == "judge_pair":
-                logging.info("Judging pair...")
-                score = autopy_test_judge(code, args.function_name, test, node=args.node, port=args.port)
-
-                logging.info(f"Judged code/test pair with score {score}")
-                result_queue.put((task_op, task_id, score, None))
+            try:
+                self.process_next(args, work_queue, result_queue)
+            except Exception as e:
+                logging.error(f"Worker error: {e}")
 
     def launch(self, work_queue, result_queue):
         for _ in range(self.args.workers):
@@ -111,5 +131,5 @@ class JobManager:
             results.append(self.result_queue.get())
         return results
 
-    def close(self):
+    def terminate(self):
         self.workers.terminate()
