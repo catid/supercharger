@@ -47,7 +47,7 @@ conda activate supercharger
 ./test_model.sh
 ```
 
-## Run an worker server
+## Run a worker server
 
 ```bash
 conda activate supercharger
