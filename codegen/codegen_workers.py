@@ -1,6 +1,7 @@
 import multiprocessing
 import logging
 import time
+from queue import Empty
 from typing import List, Tuple, Any
 
 from autopy import autopy_func, autopy_func_improve, autopy_test, autopy_test_improve, autopy_code_judge, autopy_test_judge
@@ -9,12 +10,11 @@ class JobWorkers:
     def __init__(self, args):
         self.workers = []
         self.args = args
+        self.active_workers = multiprocessing.Value('i', 0)
 
-    def process_next(self, args, work_queue, result_queue):
-        (task_op, task_id, code, test) = work_queue.get()
-
+    def process_next(self, args, task_op, task_id, code, test, result_queue):
         if task_op == "code":
-            logging.info("Generating code...")
+            #logging.info("Generating code...")
             t0 = time.time()
             code = autopy_func(args.comments, args.prototype, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
             t1 = time.time()
@@ -30,7 +30,7 @@ class JobWorkers:
             result_queue.put((task_op, task_id, score, code))
 
         elif task_op == "test":
-            logging.info("Generating test...")
+            #logging.info("Generating test...")
             t0 = time.time()
             test = autopy_test(args.comments, args.prototype, args.function_name, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
             t1 = time.time()
@@ -39,7 +39,7 @@ class JobWorkers:
             result_queue.put((task_op, task_id, None, test))
 
         elif task_op == "improve_code":
-            logging.info("Improving code...")
+            #logging.info("Improving code...")
             t0 = time.time()
             improved_code = autopy_func_improve(args.comments, code, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
             t1 = time.time()
@@ -54,7 +54,7 @@ class JobWorkers:
             result_queue.put(("improve_code", task_id, score, improved_code))
 
         elif task_op == "improve_test":
-            logging.info("Improving test...")
+            #logging.info("Improving test...")
             t0 = time.time()
             improved_test = autopy_test_improve(args.comments, args.prototype, args.function_name, test, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
             t1 = time.time()
@@ -63,7 +63,7 @@ class JobWorkers:
             result_queue.put((task_op, task_id, None, improved_test))
 
         elif task_op == "judge_pair":
-            logging.info("Judging pair...")
+            #logging.info("Judging pair...")
             t0 = time.time()
             score = autopy_test_judge(code, args.function_name, test, node=args.node, port=args.port)
             t1 = time.time()
@@ -71,18 +71,30 @@ class JobWorkers:
             logging.info(f"Judged code/test pair with score {score} in {t1 - t0} seconds")
             result_queue.put((task_op, task_id, score, None))
 
-    def worker(self, work_queue, result_queue):
+    def worker(self, work_queue, result_queue, worker_id):
         args = self.args
 
         while True:
             try:
-                self.process_next(args, work_queue, result_queue)
+                (task_op, task_id, code, test) = work_queue.get(timeout=2.0)
+            except Empty:
+                logging.info("Worker idle... (2 seconds)")
+                continue
+
+            with self.active_workers.get_lock():
+                self.active_workers.value += 1
+
+            try:
+                self.process_next(args, task_op, task_id, code, test, result_queue)
             except Exception as e:
                 logging.error(f"Worker error: {e}")
 
+            with self.active_workers.get_lock():
+                self.active_workers.value -= 1
+
     def launch(self, work_queue, result_queue):
-        for _ in range(self.args.workers):
-            p = multiprocessing.Process(target=self.worker, args=(work_queue, result_queue))
+        for worker_id in range(self.args.workers):
+            p = multiprocessing.Process(target=self.worker, args=(work_queue, result_queue, worker_id))
             p.start()
             self.workers.append(p)
 
@@ -125,11 +137,21 @@ class JobManager:
     def add_judge_pair_job(self, code, test):
         return self._add_job("judge_pair", code=code, test=test)
 
-    def get_results(self) -> List[Tuple[str, int, Any, Any]]:
+    def get_results(self, timeout: float = 1.0) -> List[Tuple[str, int, Any, Any]]:
         results = []
-        while not self.result_queue.empty():
-            results.append(self.result_queue.get())
+        try:
+            results.append(self.result_queue.get(timeout=timeout))
+            while not self.result_queue.empty():
+                results.append(self.result_queue.get(timeout=timeout))
+        except Empty:
+            pass
         return results
+
+    def active_workers(self):
+        return self.workers.active_workers.value
+
+    def approx_queue_depth(self):
+        return self.work_queue.qsize()
 
     def terminate(self):
         self.workers.terminate()

@@ -1,10 +1,11 @@
+import glob
 import re
 import os
-import multiprocessing
 import logging
 import argparse
 import shutil
 import subprocess
+from queue import Empty
 
 from codegen_workers import JobManager
 from docker_execute import DockerExecute
@@ -55,6 +56,19 @@ def get_script_name_from_function_name(function_name, is_test=False, variation=N
         else:
             return f"{function_name}_{variation}.py"
 
+def delete_old_scripts(sources_dirname, func_name):
+    dir_path = os.path.join(sources_dirname, func_name)
+    if os.path.exists(dir_path) and os.path.isdir(dir_path):
+        py_files = glob.glob(os.path.join(dir_path, "*.py"))
+
+        # Iterate through the list of .py files and delete them
+        for py_file in py_files:
+            try:
+                os.remove(py_file)
+                print(f"Deleted {py_file}")
+            except OSError as e:
+                print(f"Error deleting {py_file}: {e}")
+
 def write_script_to_disk(code, sources_dirname, func_name, is_test=False, variation=0):
     # Create the directory if it doesn't exist
     dir_path = os.path.join(sources_dirname, func_name)
@@ -96,7 +110,7 @@ def generate_requirements(project_path, output_file='requirements.txt'):
         return False
 
 def install_container_requirements(sources_dirname, function_name, docker_execute):
-    logging.info("Installing container requirements.txt...")
+    #logging.info("Installing container requirements.txt...")
 
     project_path = os.path.join(sources_dirname, function_name)
     success = generate_requirements(project_path, output_file=os.path.join(project_path, f"requirements.txt"))
@@ -105,8 +119,6 @@ def install_container_requirements(sources_dirname, function_name, docker_execut
         exit_code, logs = docker_execute.execute(command=f"pip install -r {function_name}/requirements.txt")
         if exit_code != 0:
             logging.info(f"An error occurred while installing requirements.txt: exit_code={exit_code} logs={logs}")
-        else:
-            logging.info("Successfully installed container requirements.txt")
 
 def count_non_empty_strings(array):
     count = 0
@@ -123,6 +135,8 @@ class CodeGen:
         self.tests = []
         self.codes = []
         self.pair_scores = {} # dictionary: maps task_id to (code_id, test_id, score)
+        self.total_codes_requested = 0
+        self.total_tests_requested = 0
 
         logging.info("Setting up VM...")
 
@@ -135,13 +149,22 @@ class CodeGen:
     def add_code_or_test_job(self):
         test_count = len(self.tests)
         code_count = len(self.codes)
-        logging.info(f"Now have {test_count} tests and {code_count} codes")
-        if test_count > code_count:
-            logging.info("Adding a job to write more code")
-            self.manager.add_code_job()
+
+        add_code = True
+
+        if test_count == 0 and code_count == 0:
+            add_code = self.total_tests_requested > self.total_codes_requested
         else:
-            logging.info("Adding a job to write more tests")
+            add_code = test_count > code_count
+
+        if add_code:
+            logging.info(f"Adding a job to write more code (tests asked/completed={self.total_codes_requested}/{test_count}, codes asked/completed={self.total_tests_requested}/{code_count})")
+            self.manager.add_code_job()
+            self.total_codes_requested += 1
+        else:
+            logging.info(f"Adding a job to write more tests (tests asked/completed={self.total_codes_requested}/{test_count}, codes asked/completed={self.total_tests_requested}/{code_count})")
             self.manager.add_test_job()
+            self.total_tests_requested += 1
 
     def handle_code(self, code_id, code, score, improved=False):
         print(f"Task ID {code_id}: Generated code (improved={improved}) with score {score} and len={len(code)}")
@@ -185,8 +208,6 @@ class CodeGen:
             logging.info("Adding a job to improve the code with self-reflection")
             self.manager.add_improve_code_job(code)
 
-        self.add_code_or_test_job()
-
     def handle_test(self, test_id, test, improved=False):
         print(f"Task ID {test_id}: Generated test (improved={improved}) len={len(test)}")
         #print("Test:", test)
@@ -228,8 +249,6 @@ class CodeGen:
             logging.info("Adding a job to improve the test with self-reflection")
             self.manager.add_improve_test_job(test)
 
-        self.add_code_or_test_job()
-
     def handle_judge_pair(self, task_id, score):
         (code_id, test_id, _) = self.pair_scores.get(task_id)
 
@@ -238,7 +257,8 @@ class CodeGen:
         self.pair_scores[task_id] = (code_id, test_id, score)
 
     def handle_results(self):
-        results = self.manager.get_results()
+        results = self.manager.get_results(timeout=1.0)
+
         for result in results:
             task_op, task_id, score, data = result
 
@@ -259,18 +279,20 @@ class CodeGen:
                 self.handle_judge_pair(task_id=task_id, score=score)
 
     def write_code(self):
-        # Add code/test jobs in parallel (we will later queue what we need more of)
-        for i in range(args.workers):
-            if i%2 == 0:
-                self.manager.add_code_job()
-            else:
-                self.manager.add_test_job()
-
-        logging.info("Waiting for first result...")
+        # Delete any existing code from a previous run
+        delete_old_scripts(args.sources_dirname, args.function_name)
 
         try:
             while True:
                 self.handle_results()
+
+                active_workers = self.manager.active_workers()
+                approx_queue_depth = self.manager.approx_queue_depth()
+                if approx_queue_depth == 0 and active_workers < args.workers:
+                    logging.info(f"Work queue empty and detected only {active_workers}/{args.workers} workers active.  Adding job...")
+                    self.add_code_or_test_job()
+                else:
+                    logging.info(f"Work queue depth = {approx_queue_depth} active workers = {active_workers}/{args.workers}")
 
                 for pair_score in self.pair_scores.values():
                     (code_id, test_id, score) = pair_score
@@ -281,7 +303,7 @@ class CodeGen:
                         logging.info(f"Found a good code/test pair: code={code_id} test={test_id} score={score}")
                         copy_candidate_scripts(args.sources_dirname, args.function_name, code_id, test_id)
                         logging.info("Wrote final code and test to disk. Exiting...")
-                        break
+                        return
         except KeyboardInterrupt:
             logging.info("Terminating early on user request...")
         except Exception as e:
