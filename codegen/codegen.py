@@ -96,7 +96,7 @@ def copy_and_run_pytest(source_dir, function_name, code_id, test_id, executor):
     # Run pytest command
     test_script_name = os.path.join(function_name, get_script_name_from_function_name(function_name, is_test=True))
     command = f"pytest {test_script_name}"
-    exit_code, logs = executor.execute(script_filename=test_script_name, command=command)
+    exit_code, logs = executor.execute(script_filename=test_script_name, command=command, timeout=10)
 
     return exit_code, logs
 
@@ -196,6 +196,11 @@ class CodeGen:
 
             if exit_code != 0:
                 logging.info(f"Test failed: code {code_id} <-> test {test_id}")
+
+                if len(logs) == "":
+                    logging.info("Test failed really badly somehow. Deleting {code_id} and {test_id} to avoid repeating this error.")
+                    self.codes.remove(code_id)
+                    self.tests.remove(test_id)
                 continue
 
             logging.info(f"Test passed: code {code_id} <-> test {test_id} - Asking judge if we are done")

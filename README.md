@@ -194,7 +194,7 @@ With these improvements, the test cases would be more comprehensive and cover a 
 
 ## Future work
 
-Some ideas for ways to take this further:
+I ran out of time to implement everything I had in mind, but here are some ideas for future work:
 
 * Add a planning module that breaks up a problem into several functions and generates code for each function.
 * Read the output of unit testing and use it to refine the code/tests.

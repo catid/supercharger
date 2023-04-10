@@ -41,7 +41,7 @@ class DockerExecute:
             self.container = None
 
     # Execute a command under `sources` that depends on the given script.  By default it runs the given script.
-    def execute(self, script_filename=None, command=None):
+    def execute(self, script_filename=None, command=None, timeout=10):
         try:
             if self.container is None:
                 self.recreate_container()
@@ -52,7 +52,7 @@ class DockerExecute:
 
             # Set a signal alarm to raise a TimeoutError after 30 seconds
             signal.signal(signal.SIGALRM, handler)
-            signal.alarm(30)
+            signal.alarm(timeout)
 
             if command is None:
                 command = f"python {script_filename}"
