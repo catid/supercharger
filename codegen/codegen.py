@@ -250,7 +250,7 @@ class CodeGen:
                 self.handle_test(test_id=task_id, test=data, improved=False)
 
             elif task_op == "improve_code":
-                self.handle_code(test_id=task_id, code=data, score=score, improved=True)
+                self.handle_code(code_id=task_id, code=data, score=score, improved=True)
 
             elif task_op == "improve_test":
                 self.handle_test(test_id=task_id, test=data, improved=True)
