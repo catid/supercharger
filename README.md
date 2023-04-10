@@ -4,6 +4,8 @@ Leverage locally-hosted Large Language Models to write software + unit tests for
 
 Scripts are designed to run the Baize-30B model with 8-bit quantization on a cluster of multiple Linux servers each with two 3090 or 4090 GPUs using model parallelism.
 
+There is a blog post accompanying this repo: https://catid.io/posts/auto_codegen/
+
 Interesting features:
 
 * Prompt engineering specifically for code, test, and evaluation.
