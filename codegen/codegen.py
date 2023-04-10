@@ -6,7 +6,7 @@ import argparse
 import shutil
 import subprocess
 
-from autopy import autopy_func, autopy_func_improve, autopy_test, autopy_test_improve
+from codegen_workers import JobManager
 from docker_execute import DockerExecute
 
 logging.basicConfig(level=logging.INFO)
@@ -43,11 +43,17 @@ def extract_function_name(function_def):
 
     raise Exception("No function name found")
 
-def get_script_name_from_function_name(function_name, is_test=False, variation=0):
-    if is_test:
-        return f"test_{function_name}_{variation}.py"
+def get_script_name_from_function_name(function_name, is_test=False, variation=None):
+    if variation is None:
+        if is_test:
+            return f"test_{function_name}.py"
+        else:
+            return f"{function_name}.py"
     else:
-        return f"{function_name}_{variation}.py"
+        if is_test:
+            return f"test_{function_name}_{variation}.py"
+        else:
+            return f"{function_name}_{variation}.py"
 
 def write_script_to_disk(code, sources_dirname, func_name, is_test=False, variation=0):
     # Create the directory if it doesn't exist
@@ -59,74 +65,26 @@ def write_script_to_disk(code, sources_dirname, func_name, is_test=False, variat
     with open(file_path, "w") as f:
         f.write(code)
 
-def copy_and_run_pytest(source_dir, function_name, variation, test_variation, executor):
-    source_file = os.path.join(source_dir, function_name, f"{function_name}_{variation}.py")
-    test_source_file = os.path.join(source_dir, function_name, f"test_{function_name}_{test_variation}.py")
+def copy_candidate_scripts(source_dir, function_name, code_id, test_id):
+    code_source_path = os.path.join(source_dir, function_name, get_script_name_from_function_name(function_name, is_test=False, variation=code_id))
+    code_dest_path = os.path.join(source_dir, function_name, get_script_name_from_function_name(function_name, is_test=False))
 
-    dest_file = os.path.join(source_dir, function_name, f"{function_name}.py")
-    test_dest_file = os.path.join(source_dir, function_name, f"test_{function_name}.py")
+    test_source_path = os.path.join(source_dir, function_name, get_script_name_from_function_name(function_name, is_test=True, variation=test_id))
+    test_dest_path = os.path.join(source_dir, function_name, get_script_name_from_function_name(function_name, is_test=True))
 
     # Copy files
-    shutil.copyfile(source_file, dest_file)
-    shutil.copyfile(test_source_file, test_dest_file)
+    shutil.copyfile(code_source_path, code_dest_path)
+    shutil.copyfile(test_source_path, test_dest_path)
+
+def copy_and_run_pytest(source_dir, function_name, code_id, test_id, executor):
+    copy_candidate_scripts(source_dir, function_name, code_id, test_id)
 
     # Run pytest command
-    test_script_name = f"{function_name}/test_{function_name}.py"
+    test_script_name = os.path.join(function_name, get_script_name_from_function_name(function_name, is_test=True))
     command = f"pytest {test_script_name}"
     exit_code, logs = executor.execute(script_filename=test_script_name, command=command)
 
     return exit_code, logs
-
-def code_generating_worker(queue, args, write_code=True, write_test=True):
-    while True:
-        if write_code:
-            logging.info("Generating code...")
-            code = autopy_func(args.comments, args.prototype, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
-
-            if len(code) > 0:
-                queue.put(("code", code))
-
-        if write_test:
-            logging.info("Generating test...")
-            test = autopy_test(args.comments, args.prototype, args.function_name, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
-
-            if len(test) > 0:
-                queue.put(("test", test))
-
-        if write_code and len(code) > 0:
-            logging.info("Improving code...")
-            code = autopy_func_improve(args.comments, code, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
-
-            if len(code) > 0:
-                queue.put(("code", code))
-
-        if write_test and len(test) > 0:
-            logging.info("Improving test...")
-            test = autopy_test_improve(args.comments, args.prototype, args.function_name, test, node=args.node, port=args.port, temperature=args.temperature, max_tokens=args.max_tokens)
-
-            if len(test) > 0:
-                queue.put(("test", test))
-
-def launch_workers(queue, args):
-    workers = []
-
-    if args.workers == 1:
-        write_code = True
-        write_test = True
-        p = multiprocessing.Process(target=code_generating_worker, args=(queue, args, write_code, write_test))
-        p.start()
-        workers.append(p)
-    else:
-        for i in range(args.workers):
-            write_code = (i % 2) == 0
-            write_test = (i % 2) == 1
-            p = multiprocessing.Process(target=code_generating_worker, args=(queue, args, write_code, write_test))
-            p.start()
-            workers.append(p)
-
-def terminate_workers(workers):
-    for worker in workers:
-        worker.terminate()
 
 def generate_requirements(project_path, output_file='requirements.txt'):
     result = subprocess.run(['pipreqs', project_path, '--force', '--savepath', output_file], capture_output=True, text=True)
@@ -150,72 +108,194 @@ def install_container_requirements(sources_dirname, function_name, docker_execut
         else:
             logging.info("Successfully installed container requirements.txt")
 
+def count_non_empty_strings(array):
+    count = 0
+    for item in array:
+        if item is not None and isinstance(item, str) and len(item) > 0:
+            count += 1
+    return count
 
-def write_code(args):
-    logging.info("Setting up...")
+class CodeGen:
+    def __init__(self, args):
+        self.args = args
+        self.contents = {} # dictionary: maps task_id to contents (mix of tests and codes)
+        self.code_scores = {} # dictionary: maps task_id to scores (mix of tests and codes)
+        self.tests = []
+        self.codes = []
+        self.pair_scores = {} # dictionary: maps task_id to (code_id, test_id, score)
 
-    queue = multiprocessing.Queue()
-    docker_execute = DockerExecute(sources_dirname=args.sources_dirname)
+        logging.info("Setting up VM...")
 
-    logging.info("Starting background workers...")
+        self.docker_execute = DockerExecute(sources_dirname=args.sources_dirname)
 
-    workers = launch_workers(queue, args)
+        logging.info("Starting LLM workers...")
 
-    logging.info("Waiting for first result...")
+        self.manager = JobManager(args)
 
-    code_variation = 0
-    test_variation = 0
-    codes = []
-    tests = []
+    def add_code_or_test_job(self):
+        test_count = count_non_empty_strings(self.tests)
+        code_count = count_non_empty_strings(self.codes)
+        logging.info(f"Now have {test_count} tests and {code_count} codes")
+        if test_count > code_count:
+            logging.info("Adding a job to write more code")
+            self.manager.add_code_job()
+        else:
+            logging.info("Adding a job to write more tests")
+            self.manager.add_test_job()
 
-    try:
-        while True:
-            (type, code) = queue.get()
+    def handle_code(self, code_id, code, score, improved=False):
+        print(f"Task ID {code_id}: Generated code (improved={improved}) with score {score} and len={len(code)}")
+        #print("Code:", code)
 
-            if type == "code":
-                logging.info(f"Got code {code_variation}")
-                codes.append(code)
-                write_script_to_disk(code, args.sources_dirname, args.function_name, is_test=False, variation=code_variation)
+        self.codes.append(code_id)
+        self.contents[code_id] = code
+        self.code_scores[code_id] = score
 
-                install_container_requirements(args.sources_dirname, args.function_name, docker_execute)
+        write_script_to_disk(
+            code,
+            args.sources_dirname,
+            args.function_name,
+            is_test=False,
+            variation=code_id)
 
-                for i, _ in enumerate(tests):
-                    exit_code, logs = copy_and_run_pytest(args.sources_dirname, args.function_name, code_variation, i, docker_execute)
-                    if exit_code == 0:
-                        logging.info(f"Test passed: code {code_variation} <-> test {i}")
-                    else:
-                        logging.info(f"Test failed: code {code_variation} <-> test {i}") #: exit_code={exit_code} logs={logs}")
-                    # FIXME: Use the logs to help improve things
+        install_container_requirements(
+            args.sources_dirname,
+            args.function_name,
+            self.docker_execute)
 
-                code_variation += 1
-            elif type == "test":
-                logging.info(f"Got test {test_variation}")
-                tests.append(code)
-                write_script_to_disk(code, args.sources_dirname, args.function_name, is_test=True, variation=test_variation)
+        for test_id in self.tests:
+            exit_code, logs = copy_and_run_pytest(
+                args.sources_dirname,
+                args.function_name,
+                code_id,
+                test_id,
+                self.docker_execute)
 
-                install_container_requirements(args.sources_dirname, args.function_name, docker_execute)
+            if exit_code != 0:
+                logging.info(f"Test failed: code {code_id} <-> test {test_id}")
+                continue
 
-                for i, _ in enumerate(codes):
-                    exit_code, logs = copy_and_run_pytest(args.sources_dirname, args.function_name, i, test_variation, docker_execute)
-                    if exit_code == 0:
-                        logging.info(f"Test passed: code {i} <-> test {test_variation}")
-                    else:
-                        logging.info(f"Test failed: code {i} <-> test {test_variation}") #: exit_code={exit_code} logs={logs}")
-                    # FIXME: Use the logs to help improve things
+            logging.info(f"Test passed: code {code_id} <-> test {test_id} - Asking judge if we are done")
 
-                test_variation += 1
+            test = self.contents[test_id]
+            judge_id = self.manager.add_judge_pair_job(code, test)
+            self.pair_scores[judge_id] = (code_id, test_id, None)
 
-    except Exception as e:
-        logging.error(f"Exception in run_queue: {e}")
-    finally:
-        terminate_workers(workers)
+        if not improved:
+            logging.info("Adding a job to improve the code with self-reflection")
+            self.manager.add_improve_code_job(code)
+
+        self.add_code_or_test_job()
+
+    def handle_test(self, test_id, test, improved=False):
+        print(f"Task ID {test_id}: Generated test (improved={improved}) len={len(test)}")
+        #print("Test:", test)
+
+        self.tests.append(test_id)
+        self.contents[test_id] = test
+
+        write_script_to_disk(
+            test,
+            args.sources_dirname,
+            args.function_name,
+            is_test=True,
+            variation=test_id)
+
+        install_container_requirements(
+            args.sources_dirname,
+            args.function_name,
+            self.docker_execute)
+
+        for code_id in self.codes:
+            exit_code, logs = copy_and_run_pytest(
+                args.sources_dirname,
+                args.function_name,
+                code_id,
+                test_id,
+                self.docker_execute)
+
+            if exit_code != 0:
+                logging.info(f"Test failed: code {code_id} <-> test {test_id}")
+                continue
+
+            logging.info(f"Test passed: code {code_id} <-> test {test_id} - Asking judge if we are done")
+
+            code = self.contents[code_id]
+            judge_id = self.manager.add_judge_pair_job(code, test)
+            self.pair_scores[judge_id] = (code_id, test_id, None)
+
+        if not improved:
+            logging.info("Adding a job to improve the test with self-reflection")
+            self.manager.add_improve_test_job(test)
+
+        self.add_code_or_test_job()
+
+    def handle_judge_pair(self, task_id, score):
+        (code_id, test_id, _) = self.pair_scores.get(task_id)
+
+        print(f"Task {task_id} complete: Judged pair code={code_id} test={test_id} with score={score}")
+
+        self.pair_scores[task_id] = (code_id, test_id, score)
+
+    def handle_results(self):
+        results = self.manager.get_results()
+        for result in results:
+            task_op, task_id, score, data = result
+
+            # Process a result
+            if task_op == "code":
+                self.handle_code(code_id=task_id, code=data, score=score, improved=False)
+
+            elif task_op == "test":
+                self.handle_test(test_id=task_id, test=data, improved=False)
+
+            elif task_op == "improve_code":
+                self.handle_code(test_id=task_id, code=data, score=score, improved=True)
+
+            elif task_op == "improve_test":
+                self.handle_test(test_id=task_id, test=data, improved=True)
+
+            elif task_op == "judge_pair":
+                self.handle_judge_pair(task_id=task_id, score=score)
+
+    def write_code(self):
+        # Add code/test jobs in parallel (we will later queue what we need more of)
+        for i in range(args.workers):
+            if i%2 == 0:
+                self.manager.add_code_job()
+            else:
+                self.manager.add_test_job()
+
+        logging.info("Waiting for first result...")
+
+        try:
+            while True:
+                self.handle_results()
+
+                for pair_score in self.pair_scores.values():
+                    (code_id, test_id, score) = pair_score
+                    if score is None:
+                        continue
+
+                    if score > args.threshold:
+                        logging.info(f"Found a good code/test pair: code={code_id} test={test_id} score={score}")
+                        copy_candidate_scripts(args.sources_dirname, args.function_name, code_id, test_id)
+                        logging.info("Wrote final code and test to disk. Exiting...")
+                        break
+        except KeyboardInterrupt:
+            logging.info("Terminating early on user request...")
+        except Exception as e:
+            logging.error(f"Exception in run_queue: {e}")
+        finally:
+            self.manager.terminate()
 
 def main(args):
     logging.info(f"Input comments: {args.comments}")
     logging.info(f"Function prototype: {args.prototype}")
     logging.info(f"Function name: {args.function_name}")
 
-    write_code(args)
+    codegen = CodeGen(args)
+    codegen.write_code()
 
 
 if __name__ == "__main__":

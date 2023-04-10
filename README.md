@@ -104,6 +104,7 @@ The codegen script will stop when a generated function passes a generated unit t
 
 Some ideas for ways to take this further:
 
+* Read the output of unit testing and use it to refine the code/tests.
 * Fine-tune the temperature, context-length, and max-tokens parameters to improve success rate.
 * Check if we can use smaller, faster models to improve code generation speed.
 * Use OpenAI API for some of the tasks in a hybrid of free + paid models.

@@ -110,10 +110,13 @@ def is_even(x):
 # Generate a python function with a specific prototype
 def ask_python_function_prototype(comments, prototype, user_role="Human", assistant_role="Coder"):
     user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+
+    system_prompt = f"The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always starts by summarizing the task before providing working Python code. {assistant_role} always writes syntactically correct Python code."
+
     messages = [
         {
             "role": "system",
-            "content": f"The following is a conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers responses carefully and thinks step by step before answering. {assistant_role} always writes syntactically correct Python code."
+            "content": system_prompt
         },
         {
             "role": user_role,
@@ -121,7 +124,8 @@ def ask_python_function_prototype(comments, prototype, user_role="Human", assist
         },
         {
             "role": assistant_role,
-            "content": """```
+            "content": """The add_nums function takes two input arguments (numbers) and returns their sum. Here is the code for the function:
+```
 def add_nums(x, y):
     return x + y
 ```"""
@@ -132,7 +136,8 @@ def add_nums(x, y):
         },
         {
             "role": assistant_role,
-            "content": """```
+            "content": """The mul_nums function takes two input arguments (floats) and returns their product. Here is the code for the function:
+```
 def mul_nums(x: float, y: float) -> float:
     return x * y
 ```"""
@@ -143,7 +148,8 @@ def mul_nums(x: float, y: float) -> float:
         },
         {
             "role": assistant_role,
-            "content": """```
+            "content": """The is_prime function takes an integer input argument and checks if it is a prime number. It returns True if the number is prime, otherwise, it returns False. Here is the code for the function:
+```
 def is_prime(n: int) -> bool:
     if n < 2:
         return False
