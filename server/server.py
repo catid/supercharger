@@ -89,6 +89,4 @@ if __name__ == "__main__":
     else:
         args.load_in_8bit = None
 
-    args = parser.parse_args()
-
     main(args)
