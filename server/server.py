@@ -1,6 +1,7 @@
 import argparse
 import logging
 import asyncio
+import time
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -39,15 +40,23 @@ async def ask_endpoint(data: AskData):
         logger.info(f"Asking: {prompt}")
         logger.info(f"Stop strings: {stop_strs}")
 
+        start_time = time.time()
+
         response = m.ask(
             prompt,
             stop_strs=stop_strs,
             temperature=temperature,
             max_new_tokens=max_tokens)
 
-        logger.info(f"Response: {response}")
+        end_time = time.time()
+        duration = end_time - start_time
 
-        return {'response': response}
+        logger.info(f"Response in {duration} seconds: {response}")
+
+        return {
+            'response': response,
+            'duration': duration,
+        }
 
     except Exception as e:
         return {'response': f"Exception while processing request: {e}"}
@@ -57,7 +66,7 @@ async def ask_endpoint(data: AskData):
 
 def main(args):
     global m
-    m = LanguageModel()
+    m = LanguageModel(args.model, load_in_8bit=args.load_in_8bit)
 
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=args.listen)
@@ -65,6 +74,20 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Supercharged Vicuna-13B")
     parser.add_argument("--listen", type=int, default=5000, help="Port to listen on (default: 5000)")
+    parser.add_argument("--model", type=str, help="Select model to use (default: galpaca-30b). Available options: baize-30b, baize-13b, baize-7b, galpaca-30b, galpaca-7b", default="galpaca-30b")
+    parser.add_argument("--8bit", action="store_true", help="Use 8-bit precision (default: False)")
+    parser.add_argument("--fp16", action="store_true", help="Use 16-bit precision (default: False)")
+
+    args = parser.parse_args()
+
+    if getattr(args, "8bit"):
+        logging.info("8-bit precision selected.")
+        args.load_in_8bit = True
+    elif args.fp16:
+        logging.info("16-bit precision selected.")
+        args.load_in_8bit = False
+    else:
+        args.load_in_8bit = None
 
     args = parser.parse_args()
 

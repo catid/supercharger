@@ -198,6 +198,7 @@ With these improvements, the test cases would be more comprehensive and cover a 
 
 I ran out of time to implement everything I had in mind, but here are some ideas for future work:
 
+* Check the output for cycles.
 * Add a planning module that breaks up a problem into several functions and generates code for each function.
 * Read the output of unit testing and use it to refine the code/tests.
 * Fine-tune the temperature, context-length, and max-tokens parameters to improve success rate.

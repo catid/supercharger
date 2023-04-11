@@ -32,9 +32,11 @@ def create_conversation_template(messages, default_template=None, custom_start="
     else:
         conversation.append(f"{decorate_role(assistant_role)}:")
 
+    # Sometimes the smaller models forget the colon at the end of the prompt,
+    # So I didn't include it in the stop_strs
     stop_strs = [
-        f"{decorate_role(user_role)}:",
-        f"{decorate_role(assistant_role)}:"
+        f"{decorate_role(user_role)}",
+        f"{decorate_role(assistant_role)}"
     ]
 
     return "\n".join(conversation), stop_strs

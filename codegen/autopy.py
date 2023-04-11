@@ -114,7 +114,7 @@ def find_first_number_between_0_and_1(s: str):
 
     return None
 
-def autopy_code_judge(commented_code, function_name, node="localhost", port=5000, temperature=0.5, max_tokens=8):
+def autopy_code_judge(commented_code, function_name, node="localhost", port=5000, temperature=0.0, max_tokens=4):
     #logging.info(f"autopy_code_judge: comments = `{comments}`, prototype = `{prototype}`")
 
     prompt, stop_strs = ask_python_code_judge(commented_code, function_name)
@@ -128,7 +128,7 @@ def autopy_code_judge(commented_code, function_name, node="localhost", port=5000
 
     return find_first_number_between_0_and_1(result)
 
-def autopy_test_judge(commented_code, function_name, test_code, node="localhost", port=5000, temperature=0.5, max_tokens=8):
+def autopy_test_judge(commented_code, function_name, test_code, node="localhost", port=5000, temperature=0.0, max_tokens=4):
     #logging.info(f"autopy_test_judge: comments = `{comments}`, prototype = `{prototype}`")
 
     prompt, stop_strs = ask_python_test_judge(commented_code, function_name, test_code)
