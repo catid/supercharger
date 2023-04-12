@@ -3,9 +3,15 @@
 # Change to the supercharger directory
 cd "$(dirname "$0")"
 
+if [ -f ~/.zshrc ]; then
+  . ~/.zshrc
+elif [ -f ~/.bashrc ]; then
+  . ~/.bashrc
+fi
+
 conda activate supercharger
 
-source ../update.sh
+. ../update.sh
 
 # Check if a port argument is provided
 if [ -z "$1" ]; then
