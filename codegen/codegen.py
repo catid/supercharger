@@ -332,9 +332,9 @@ if __name__ == "__main__":
     parser.add_argument("--prototype", default="def factorial(n)", help="Prototype of the desired function.")
     parser.add_argument("--node", default="localhost", help="Hostname or IP address of the OpenAI GPT server.")
     parser.add_argument("--port", type=int, default=8000, help="Port number of the OpenAI GPT server.")
-    parser.add_argument("--temperature", type=float, default=1.0, help="Temperature parameter for the OpenAI GPT server.")
+    parser.add_argument("--temperature", type=float, default=0.7, help="Temperature parameter for the model: Lower values will make the model more conservative but will repeat itself more often, while higher values will make the model more creative and generate less likely results.")
     parser.add_argument("--max-tokens", type=int, default=1024, help="Maximum number of tokens in the generated code.")
-    parser.add_argument("--workers", type=int, default=4, help="Number of worker machines when using a load balancer in front of a cluster of worker nodes.")
+    parser.add_argument("--workers", type=int, default=8, help="Number of worker machines when using a load balancer in front of a cluster of worker nodes.")
     parser.add_argument("--threshold", type=float, default=0.75, help="Minimum threshold of code correctness before stopping.")
 
     args = parser.parse_args()

@@ -8,7 +8,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def read_node_addresses(filename):
+def read_node_addresses(filename="load_balancer_nodes.txt"):
     with open(filename, 'r') as f:
         lines = [line.strip() for line in f.readlines() if line.strip() and not line.startswith('#')]
     return lines
@@ -50,7 +50,7 @@ def replace_filename_with_run_server(path):
     return new_path
 
 def main():
-    node_addresses = read_node_addresses("load_balancer_nodes.txt")
+    node_addresses = read_node_addresses()
     script_path = replace_filename_with_run_server(get_script_path())
 
     try:
@@ -66,6 +66,8 @@ def main():
         logging.info("Terminated...")
     except KeyboardInterrupt:
         logging.info("\nTerminating remote shells...")
+        for process in processes:
+            process.terminate()
         for process in processes:
             process.terminate()
 

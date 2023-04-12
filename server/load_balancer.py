@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 nodes = []
-current_node = 0
+busy_nodes = set()
 
 async def fetch_node_data(session: aiohttp.ClientSession, url: str, data) -> dict:
     async with session.post(url, json=data) as response:
@@ -24,24 +24,19 @@ async def fetch_node_data(session: aiohttp.ClientSession, url: str, data) -> dic
 async def ask_endpoint(request: Request):
     data = await request.json()
 
-    global nodes, current_node
     start_time = time.time()
-    timeout = 300 # 5 minutes
 
-    while True:
-        # Check if we've exceeded the timeout
-        if time.time() - start_time > timeout:
-            raise HTTPException(status_code=503, detail="All nodes are currently unavailable")
+    global nodes, busy_nodes
 
-        # Check if we've tried all nodes already
-        if current_node >= len(nodes):
-            current_node = 0
-            await asyncio.sleep(1)
+    for node in nodes:
+        if node in busy_nodes:
+            continue
 
-        node_url = f"http://{nodes[current_node]}/ask"
-        current_node += 1
+        node_url = f"http://{node}/ask"
 
         try:
+            busy_nodes.add(node)
+
             logging.info(f"Trying on {node_url}")
             try_start_time = time.time()
 
@@ -51,15 +46,17 @@ async def ask_endpoint(request: Request):
             logging.info(f"Completed on {node_url} in {time.time() - try_start_time:.2f} seconds (overall delay: {time.time() - start_time:.2f} seconds)")
             return response_data
         except (aiohttp.ClientError, aiohttp.ClientResponseError):
-            logging.info(f"Node busy: {node_url}")
+            logging.info(f"Node unreachable: {node_url}")
             pass
+        finally:
+            busy_nodes.remove(node)
 
-def read_node_addresses():
-    try:
-        with open("load_balancer_nodes.txt") as f:
-            return [line.strip() for line in f.readlines() if line.strip()]
-    except FileNotFoundError:
-        return []
+    raise HTTPException(status_code=503, detail="All nodes are currently unavailable")
+
+def read_node_addresses(filename="load_balancer_nodes.txt"):
+    with open(filename, 'r') as f:
+        lines = [line.strip() for line in f.readlines() if line.strip() and not line.startswith('#')]
+    return lines
 
 def main():
     parser = argparse.ArgumentParser(description="Load balancer")
