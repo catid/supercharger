@@ -67,8 +67,6 @@ def main():
         logging.info("\nTerminating remote shells...")
         for process in processes:
             process.terminate()
-        for process in processes:
-            process.terminate()
 
     logging.info("Terminated.")
 

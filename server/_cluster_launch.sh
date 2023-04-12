@@ -17,18 +17,8 @@ pip install -r ../requirements.txt
 # Check if a port argument is provided
 if [ -z "$1" ]; then
     # Start the server on the default port
-    python server.py & pid=$!
+    python server.py
 else
     # Start the server on the specified port
-    python server.py --listen "$1" & pid=$!
+    python server.py --listen "$1"
 fi
-
-# Set up a signal handler to kill the program when the script ends
-trap ctrl_c INT
-function ctrl_c() {
-    kill $pid
-    exit
-}
-
-# Sleep forever
-sleep infinity
