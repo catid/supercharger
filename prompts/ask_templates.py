@@ -179,7 +179,7 @@ def ask_python_pytest_prototype(comments, prototype, user_role="Human", assistan
         },
         {
             "role": user_role,
-            "content": "# Add two numbers and return their sum\ndef add_nums(x, y):"
+            "content": "Please write a pytest for this function:\n# Add two numbers and return their sum\ndef add_nums(x, y):"
         },
         {
             "role": assistant_role,
@@ -205,7 +205,7 @@ def test_add_nums_mixed():
         },
         {
             "role": user_role,
-            "content": "# A function that checks if an integer is prime\n# Returns true or false\ndef is_prime(n):"
+            "content": "Please write a pytest for this function:\n# A function that checks if an integer is prime\n# Returns true or false\ndef is_prime(n):"
         },
         {
             "role": assistant_role,
@@ -227,7 +227,7 @@ def test_is_prime():
         },
         {
             "role": user_role,
-            "content": f"{comments}\n{prototype}"
+            "content": f"Please write a pytest for this function:\n{comments}\n{prototype}"
         },
     ]
 

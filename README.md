@@ -83,6 +83,9 @@ This will read `load_balancer_nodes.txt` and launch a server process on each nod
 As a pre-requisite, you'll want to first install and test the server on each node.
 And you'll need to have passwordless ssh access to each node with e.g. `ssh-copy-id`.
 
+Known issue: When the script terminates it will leave zombie processes on the servers.
+To kill them, go to each server and run ./kill_gpu_users.sh to kill the zombie processes.
+
 
 ## Run a load balancer
 
