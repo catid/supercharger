@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Unit test for BaizeModel")
     parser.add_argument("--temperature", type=float, help="Temperature for text generation (default: 0.7)", default=0.7)
     parser.add_argument("--max-tokens", type=int, help="Maximum number of tokens in generated text (default: 1024)", default=1024)
-    parser.add_argument("--model", type=str, help="Select model to use (default: galpaca-30b). Available options: baize-30b, baize-13b, baize-7b, galpaca-30b, galpaca-7b, koala-13b, koala-7b", default="koala-13b")
+    parser.add_argument("--model", type=str, help="Select model to use (default: galpaca-30b). Available options: baize-30b, baize-13b, baize-7b, galpaca-30b, galpaca-7b, koala-13b, koala-7b, vicuna-13b, vicuna-7b", default="koala-13b")
     parser.add_argument("--8bit", action="store_true", help="Use 8-bit precision (default: False)")
     parser.add_argument("--fp16", action="store_true", help="Use 16-bit precision (default: False)")
 

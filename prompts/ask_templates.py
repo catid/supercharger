@@ -521,3 +521,394 @@ Please rank the following unit test code from 0 to 1, where 0 means the code is 
     custom_start = "After careful consideration, I would rank the given unit test code as "
 
     return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
+
+# This version ranks the quality of a C++ function
+def ask_cpp_expert_score(code, user_role="Human", assistant_role="Expert"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a C++ conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully. {assistant_role} always provides an expert rating from 0 to 1 of the provided C++ code."
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following C++ function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+// Function to calculate the factorial of a positive integer using recursion
+int factorial(int n) {
+    // Base case: If n is 0 or 1, the factorial is 1
+    if (n == 0 || n == 1) {
+        return 1;
+    }
+    // Recursive case: Calculate the factorial of (n-1) and multiply it by n
+    else {
+        return n * factorial(n-1);
+    }
+}
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 1, meaning that it cannot be improved as it is a valid and functional implementation of the factorial function in C++."""
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following C++ function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+// Sort an array of integers using bubble sort
+void bubble_sort(int arr[], int n) {
+    bool swapped;
+    for (int i = 0; i < n - 1; i++) {
+        swapped = false;
+        for (int j = 0; j < n - i - 1; j += 2) {
+            if (arr[j] > arr[j + 2]) {
+                swap(arr[j], arr[j + 2]);
+                swapped = true;
+            }
+        }
+        if (swapped == false) {
+            break;
+        }
+    }
+}
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 0, meaning it has a bug that needs to be fixed."""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please rank the following C++ function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+{code}
+```"""
+        },
+    ]
+
+    custom_start = "After careful consideration, I would rank the given code as "
+
+    return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
+
+# This version ranks the quality of a Python function
+def ask_python_expert_score(code, user_role="Human", assistant_role="Expert"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a Python conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully. {assistant_role} always provides an expert rating from 0 to 1 of the provided Python code."
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following Python function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+def gcd_lcm(a, b):
+    def euclidean_algorithm(x, y):
+        while y != 0:
+            x, y = y, x % y
+        return x
+
+    if a == 0 or b == 0:
+        raise ValueError("Both input numbers must be non-zero")
+
+    gcd = euclidean_algorithm(abs(a), abs(b))
+    lcm = abs(a * b) // gcd
+
+    return gcd, lcm
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 0.95. Although the code seems correct and efficient, it's important to acknowledge that there might be room for minor improvements or alternative solutions."""
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following Python function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+def recursive_factorial(n):
+    if n == 0:
+        return 1
+    else:
+        return n * recursive_factorial(n)
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 0.  The provided recursive_factorial function has a bug, as it will result in an infinite loop due to the recursive call not reducing the argument."""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please rank the following Python function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+{code}
+```"""
+        },
+    ]
+
+    custom_start = "After careful consideration, I would rank the given code as "
+
+    return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
+
+# This version ranks the quality of a C# function
+def ask_cs_expert_score(code, user_role="Human", assistant_role="Expert"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a C# conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully. {assistant_role} always provides an expert rating from 0 to 1 of the provided C# code."
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following C# function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+    public static int RecursiveRangeSum(int start, int end)
+    {
+        if (start == end)
+        {
+            return start;
+        }
+        else
+        {
+            return start + RecursiveRangeSum(start, end - 1);
+        }
+    }
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 0. The provided RecursiveRangeSum function has a bug that results in an infinite loop."""
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following C# function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+    public static string ReverseWords(string input)
+    {
+        StringBuilder reversed = new StringBuilder();
+        StringBuilder word = new StringBuilder();
+
+        for (int i = 0; i < input.Length; i++)
+        {
+            char currentChar = input[i];
+
+            if (currentChar == ' ')
+            {
+                if (word.Length > 0)
+                {
+                    reversed.Insert(0, word.ToString());
+                    word.Clear();
+                }
+                reversed.Insert(0, currentChar);
+            }
+            else
+            {
+                word.Append(currentChar);
+            }
+        }
+
+        if (word.Length > 0)
+        {
+            reversed.Insert(0, word.ToString());
+        }
+
+        return reversed.ToString();
+    }
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 1.  The provided ReverseWords function appears to be well-written and correctly reverses the order of words in a given string."""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please rank the following C# function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+{code}
+```"""
+        },
+    ]
+
+    custom_start = "After careful consideration, I would rank the given code as "
+
+    return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
+
+# This version ranks the quality of a JavaScript function
+def ask_js_expert_score(code, user_role="Human", assistant_role="Expert"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a JavaScript conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully. {assistant_role} always provides an expert rating from 0 to 1 of the provided JavaScript code."
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following JavaScript function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+function recursiveFactorial(n) {
+    if (n === 0) {
+        return 1;
+    } else {
+        return n * recursiveFactorial(n - 1);
+    }
+}
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 1. The provided recursiveFactorial function appears to be well-written and correctly calculates the factorial of a non-negative integer using recursion."""
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following JavaScript function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+function recursiveRangeSum(start, end) {
+    if (start === end) {
+        return start;
+    } else {
+        return start + recursiveRangeSum(start, end - 1);
+    }
+}
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 0.  The provided recursiveRangeSum function has a bug that results in an infinite loop. The issue is in the recursive call, which should be made with start + 1 as its first argument, but it is called with start instead."""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please rank the following JavaScript function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+{code}
+```"""
+        },
+    ]
+
+    custom_start = "After careful consideration, I would rank the given code as "
+
+    return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
+
+# This version ranks the quality of a Java function
+def ask_java_expert_score(code, user_role="Human", assistant_role="Expert"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a Java conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully. {assistant_role} always provides an expert rating from 0 to 1 of the provided Java code."
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following Java function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+    public static int recursiveFactorial(int n) {
+        /*
+         * Returns the factorial of n using recursion.
+         */
+        if (n <= 0) {
+            return 0;
+        } else {
+            return n * recursiveFactorial(n - 1);
+        }
+    }
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 0. This Java function has a bug and can be improved.  The bug is in the conditional statement in the beginning of the function. If n is less than or equal to 0, the function returns 0, which is incorrect. The correct result for 0! (0 factorial) is 1, not 0."""
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following Java function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+public static int recursiveRangeSum(int start, int end) {
+    /*
+        * Returns the sum of integers from start to end (inclusive) using recursion.
+        */
+    if (start == end) {
+        return start;
+    } else {
+        return start + recursiveRangeSum(start + 1, end);
+    }
+}
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 1.  This Java function does not have a bug and can be improved only slightly.
+
+The function correctly calculates the sum of integers from `start` to `end` (inclusive)."""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please rank the following Java function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+{code}
+```"""
+        },
+    ]
+
+    custom_start = "After careful consideration, I would rank the given code as "
+
+    return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
+
+# This version ranks the quality of a TypeScript function
+def ask_ts_expert_score(code, user_role="Human", assistant_role="Expert"):
+    user_role, assistant_role = normalize_role(user_role), normalize_role(assistant_role)
+    messages = [
+        {
+            "role": "System",
+            "content": f"The following is a TypeScript conversation between {user_role} and {assistant_role}. {user_role} and {assistant_role} take turns chatting. {assistant_role} always considers the previous query carefully. {assistant_role} always provides an expert rating from 0 to 1 of the provided TypeScript code."
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following TypeScript function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+    public static int recursiveFactorial(int n) {
+        /*
+         * Returns the factorial of n using recursion.
+         */
+        if (n <= 0) {
+            return 0;
+        } else {
+            return n * recursiveFactorial(n - 1);
+        }
+    }
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 0. This TypeScript function has a bug and can be improved.  The bug is in the conditional statement in the beginning of the function. If n is less than or equal to 0, the function returns 0, which is incorrect. The correct result for 0! (0 factorial) is 1, not 0."""
+        },
+        {
+            "role": user_role,
+            "content": """Please rank the following TypeScript function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+public static int recursiveRangeSum(int start, int end) {
+    /*
+        * Returns the sum of integers from start to end (inclusive) using recursion.
+        */
+    if (start == end) {
+        return start;
+    } else {
+        return start + recursiveRangeSum(start + 1, end);
+    }
+}
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rank the given code as 1.  This TypeScript function does not have a bug and can be improved only slightly.
+
+The function correctly calculates the sum of integers from `start` to `end` (inclusive)."""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please rank the following TypeScript function from 0 to 1, where 0 means the code has a bug and 1 means the code cannot be improved:
+```
+{code}
+```"""
+        },
+    ]
+
+    custom_start = "After careful consideration, I would rank the given code as "
+
+    return create_conversation_template(messages, custom_start=custom_start, assistant_role=assistant_role, user_role=user_role)
