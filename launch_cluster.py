@@ -22,7 +22,7 @@ def launch_servers(node_addresses, script_path):
     log_threads = []
     for addr in node_addresses:
         host, port = addr.split(':')
-        cmd = f"pdsh -R ssh -w {host} {script_path} {port}"
+        cmd = f"pdsh -b -R ssh -w {host} {script_path} {port}"
         print(f"Running command: {cmd}")
 
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
@@ -46,7 +46,7 @@ def get_script_path():
 
 def replace_filename_with_run_server(path):
     dir_path = os.path.dirname(path)
-    new_path = os.path.join(dir_path, "server/cluster_launch.sh")
+    new_path = os.path.join(dir_path, "_cluster_launch.sh")
     return new_path
 
 def main():

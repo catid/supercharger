@@ -77,6 +77,8 @@ conda activate supercharger
 python launch_cluster.py
 ```
 
+The repo must be in the same place on all the machines, relative to ~.
+
 This will read `load_balancer_nodes.txt` and launch a server process on each node.
 As a pre-requisite, you'll want to first install and test the server on each node.
 And you'll need to have passwordless ssh access to each node with e.g. `ssh-copy-id`.
