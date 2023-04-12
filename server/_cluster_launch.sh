@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Change to the supercharger directory
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../"
 
 if [ -f ~/.zshrc ]; then
   . ~/.zshrc

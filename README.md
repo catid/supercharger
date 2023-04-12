@@ -74,7 +74,7 @@ conda activate supercharger
 ```bash
 conda activate supercharger
 
-python launch_cluster.py
+./launch_cluster.sh
 ```
 
 The repo must be in the same place on all the machines, relative to ~.
