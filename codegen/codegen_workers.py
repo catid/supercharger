@@ -78,7 +78,7 @@ class JobWorkers:
             try:
                 (task_op, task_id, code, test) = work_queue.get(timeout=2.0)
             except Empty:
-                logging.info("Worker idle... (2 seconds)")
+                logging.info(f"Worker {worker_id} idle... (2 seconds)")
                 continue
 
             with self.active_workers.get_lock():
@@ -87,7 +87,7 @@ class JobWorkers:
             try:
                 self.process_next(args, task_op, task_id, code, test, result_queue)
             except Exception as e:
-                logging.error(f"Worker error: {e}")
+                logging.error(f"Worker {worker_id} error: {e}")
 
             with self.active_workers.get_lock():
                 self.active_workers.value -= 1

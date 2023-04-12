@@ -2,6 +2,7 @@ import torch
 
 from model_baize import load_model_baize
 from model_galpaca import load_model_galpaca
+from model_koala import load_model_koala
 
 def is_array_of_strings(input_array):
     if isinstance(input_array, list) and all(isinstance(element, str) for element in input_array):
@@ -15,6 +16,8 @@ class LanguageModel:
             self.tokenizer, self.model, self.context_len = load_model_baize(model_name, load_in_8bit)
         elif "galpaca" in model_name:
             self.tokenizer, self.model, self.context_len = load_model_galpaca(model_name, load_in_8bit)
+        elif "koala" in model_name:
+            self.tokenizer, self.model, self.context_len = load_model_koala(model_name, load_in_8bit)
         else:
             raise Exception(f"Unknown model_name={model_name}")
 
