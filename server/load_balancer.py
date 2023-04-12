@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 nodes = []
 current_node = 0
-node_port = 5000
 
 async def fetch_node_data(session: aiohttp.ClientSession, url: str, data) -> dict:
     async with session.post(url, json=data) as response:
@@ -39,7 +38,7 @@ async def ask_endpoint(request: Request):
             current_node = 0
             await asyncio.sleep(1)
 
-        node_url = f"http://{nodes[current_node]}:{node_port}/ask"
+        node_url = f"http://{nodes[current_node]}/ask"
         current_node += 1
 
         try:
@@ -65,12 +64,10 @@ def read_node_addresses():
 def main():
     parser = argparse.ArgumentParser(description="Load balancer")
     parser.add_argument("--nodes", type=str, nargs="+", help="List of node addresses")
-    parser.add_argument("--port", type=int, default=5000, help="Port used by nodes")
     parser.add_argument("--listen", type=int, default=8000, help="Load balancer port")
     args = parser.parse_args()
 
-    global nodes, node_port
-    node_port = args.port
+    global nodes
 
     if args.nodes is None:
         nodes = read_node_addresses()

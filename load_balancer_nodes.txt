@@ -1,4 +1,13 @@
-gpu3.lan
-gpu4.lan
-gpu5.lan
-gpu6.lan
+# This file is read by load_balancer and launch_cluster script.
+
+gpu3.lan:5000
+gpu3.lan:5001
+
+gpu4.lan:5000
+gpu4.lan:5001
+
+gpu5.lan:5000
+gpu5.lan:5001
+
+gpu6.lan:5000
+gpu6.lan:5001
