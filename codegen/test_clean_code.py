@@ -119,8 +119,6 @@ The maximum value in the list is 91
 
     docker_execute = DockerExecute(sources_dirname=sources_dirname)
 
-    docker_execute.execute(command="pip install smart_imports")
-
     # Prime the pump
     exit_code, output = docker_execute.execute(test_script)
     assert output == expected_output, f"Unexpected output: {output}"

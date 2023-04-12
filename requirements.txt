@@ -18,4 +18,5 @@ pytest
 docker
 yapf
 pipreqs
-smart_imports
+autoimport
+

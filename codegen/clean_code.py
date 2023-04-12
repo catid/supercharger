@@ -2,6 +2,8 @@ import re
 import ast
 import logging
 
+from autoimport import fix_code
+
 from yapf.yapflib.yapf_api import FormatCode
 
 from fix_ast_errors import fix_ast_errors
@@ -55,7 +57,7 @@ def remove_comments_before_first_function(script):
 
     return clean_script
 
-def clean_code(code, strip_md=True, strip_globals=True, strip_leading_comments=False, strip_import_mods=[], strip_import_funcs=[], add_smart_imports=True):
+def clean_code(code, strip_md=True, strip_globals=True, strip_leading_comments=False, strip_import_mods=[], strip_import_funcs=[], try_autoimport=True):
 
     #print(f"CODE:\n\n----\n{code}\n----\n\n")
 
@@ -90,9 +92,11 @@ def clean_code(code, strip_md=True, strip_globals=True, strip_leading_comments=F
 
     #print(f"remove_comments_before_first_function:\n\n----\n{code}\n----\n\n")
 
-    # Use smart_imports to fix up any problems with forgetting imports
-    if add_smart_imports and len(code.strip()) > 0:
-        code = f"import smart_imports\nsmart_imports.all()\n{code}"
+    if try_autoimport:
+        try:
+            code = fix_code(code)
+        except Exception as e:
+            logging.info(f"clean_code::try_autoimport failed due to exception: {e}")
 
     try:
         code, _ = FormatCode(code)

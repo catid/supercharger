@@ -166,6 +166,31 @@ class CodeGen:
             self.manager.add_test_job()
             self.total_tests_requested += 1
 
+    def test_pair(self, code_id, test_id):
+        exit_code, logs = copy_and_run_pytest(
+            args.sources_dirname,
+            args.function_name,
+            code_id,
+            test_id,
+            self.docker_execute)
+
+        if exit_code != 0:
+            logging.info(f"Test failed: code {code_id} <-> test {test_id}: exit_code={exit_code} logs={logs}")
+
+            if len(logs) == "":
+                logging.info("Test failed really badly somehow. Deleting {code_id} and {test_id} to avoid repeating this error.")
+                self.codes.remove(code_id)
+                self.tests.remove(test_id)
+            return False
+
+        logging.info(f"Test passed: code {code_id} <-> test {test_id} - Asking judge if we are done")
+
+        test = self.contents[test_id]
+        judge_id = self.manager.add_judge_pair_job(code, test)
+        self.pair_scores[judge_id] = (code_id, test_id, None)
+
+        return True
+
     def handle_code(self, code_id, code, score, improved=False):
         print(f"Task ID {code_id}: Generated code (improved={improved}) with score {score} and len={len(code)}")
         #print("Code:", code)
@@ -187,27 +212,7 @@ class CodeGen:
             self.docker_execute)
 
         for test_id in self.tests:
-            exit_code, logs = copy_and_run_pytest(
-                args.sources_dirname,
-                args.function_name,
-                code_id,
-                test_id,
-                self.docker_execute)
-
-            if exit_code != 0:
-                logging.info(f"Test failed: code {code_id} <-> test {test_id}")
-
-                if len(logs) == "":
-                    logging.info("Test failed really badly somehow. Deleting {code_id} and {test_id} to avoid repeating this error.")
-                    self.codes.remove(code_id)
-                    self.tests.remove(test_id)
-                continue
-
-            logging.info(f"Test passed: code {code_id} <-> test {test_id} - Asking judge if we are done")
-
-            test = self.contents[test_id]
-            judge_id = self.manager.add_judge_pair_job(code, test)
-            self.pair_scores[judge_id] = (code_id, test_id, None)
+            self.test_pair(code_id, test_id)
 
         if not improved:
             logging.info("Adding a job to improve the code with self-reflection")
@@ -233,22 +238,7 @@ class CodeGen:
             self.docker_execute)
 
         for code_id in self.codes:
-            exit_code, logs = copy_and_run_pytest(
-                args.sources_dirname,
-                args.function_name,
-                code_id,
-                test_id,
-                self.docker_execute)
-
-            if exit_code != 0:
-                logging.info(f"Test failed: code {code_id} <-> test {test_id}")
-                continue
-
-            logging.info(f"Test passed: code {code_id} <-> test {test_id} - Asking judge if we are done")
-
-            code = self.contents[code_id]
-            judge_id = self.manager.add_judge_pair_job(code, test)
-            self.pair_scores[judge_id] = (code_id, test_id, None)
+            self.test_pair(code_id, test_id)
 
         if not improved:
             logging.info("Adding a job to improve the test with self-reflection")
