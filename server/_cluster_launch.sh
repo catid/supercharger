@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Change to the supercharger directory
-cd "$(dirname "$0")/../"
-
 if [ -f ~/.zshrc ]; then
   . ~/.zshrc
 elif [ -f ~/.bashrc ]; then
@@ -11,13 +8,14 @@ fi
 
 conda activate supercharger
 
-. ./update.sh
+git pull
+pip install -r ../requirements.txt
 
 # Check if a port argument is provided
 if [ -z "$1" ]; then
     # Start the server on the default port
-    python server/server.py
+    python server.py
 else
     # Start the server on the specified port
-    python server/server.py --listen "$1"
+    python server.py --listen "$1"
 fi
