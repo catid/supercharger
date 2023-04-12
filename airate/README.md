@@ -1,6 +1,10 @@
 # airate
 
+![airate logo](airate.jpg)
+
 Use AI for static analysis of C#, C++, Java, JavaScript, PHP, Python, and TypeScript projects.
+
+WIP: Currently only supports C++
 
 ## Setup the environment
 
