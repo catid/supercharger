@@ -12,12 +12,12 @@ def extract_functions_and_classes(file_path):
 
     return pattern.findall(content)
 
-def airate_js(file_path):
+def airate_js(file_path, node="localhost", port=5000):
     markdown_str = ""
     code_blocks = extract_functions_and_classes(file_path)
 
     for idx, code_block in enumerate(code_blocks):
-        score = js_oracle(code_block)
+        score = js_oracle(code_block, node=node, port=port)
         markdown_str += f"\n  - Code block {idx + 1}:\n"
         markdown_str += f"    ```javascript\n{code_block.strip()}\n    ```\n"
         markdown_str += f"    Score: {score:.2f}\n"

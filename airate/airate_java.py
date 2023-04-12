@@ -18,12 +18,12 @@ def extract_methods(file_path):
 
     return methods
 
-def airate_java(file_path):
+def airate_java(file_path, node="localhost", port=5000):
     markdown_str = ""
     code_blocks = extract_methods(file_path)
 
     for idx, code_block in enumerate(code_blocks):
-        score = java_oracle(code_block)
+        score = java_oracle(code_block, node=node, port=port)
         markdown_str += f"\n  - Code block {idx + 1}:\n"
         markdown_str += f"    ```java\n{code_block.strip()}\n    ```\n"
         markdown_str += f"    Score: {score:.2f}\n"
