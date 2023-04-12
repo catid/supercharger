@@ -13,12 +13,12 @@ import airate_php
 
 file_handlers = {
     ".cpp": airate_cpp.airate_cpp,
-    ".py": airate_py.airate_py,
-    ".js": airate_js.airate_js,
-    ".ts": airate_ts.airate_ts,
-    ".java": airate_java.airate_java,
-    ".cs": airate_cs.airate_cs,
-    ".php": airate_php.airate_php,
+    #".py": airate_py.airate_py,
+    #".js": airate_js.airate_js,
+    #".ts": airate_ts.airate_ts,
+    #".java": airate_java.airate_java,
+    #".cs": airate_cs.airate_cs,
+    #".php": airate_php.airate_php,
 }
 
 def rate_file(args, file_path, depth):
