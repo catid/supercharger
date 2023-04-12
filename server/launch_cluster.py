@@ -34,7 +34,6 @@ def launch_servers(node_addresses, script_path):
 
     return processes, log_threads
 
-
 def get_script_path():
     script_path = os.path.abspath(sys.argv[0])
     home_path = os.path.expanduser("~")
