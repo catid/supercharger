@@ -185,6 +185,7 @@ class CodeGen:
 
         logging.info(f"Test passed: code {code_id} <-> test {test_id} - Asking judge if we are done")
 
+        code = self.contents[code_id]
         test = self.contents[test_id]
         judge_id = self.manager.add_judge_pair_job(code, test)
         self.pair_scores[judge_id] = (code_id, test_id, None)
