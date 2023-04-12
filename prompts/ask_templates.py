@@ -417,7 +417,7 @@ def ask_python_code_judge(commented_code, function_name, user_role="Human", assi
         },
         {
             "role": user_role,
-            "content": """Please rank the following add_nums function from 0 to 1, where 0 means the code is not good and 1 means the code is good:
+            "content": """Please rank the following add_nums function from 0 to 1, where 0 means the code has a bug and 1 means the code is good:
 ```
 # Add two numbers and return their sum
 def add_nums(x, y):
@@ -426,11 +426,24 @@ def add_nums(x, y):
         },
         {
             "role": assistant_role,
-            "content": """After careful consideration, I would rate the given add_nums function as 0.9. The code is simple, clean, and easy to understand. It performs the expected operation of adding two numbers together and returning their sum. However, the function could be improved with better documentation (for example, specifying input types and return type in a docstring)."""
+            "content": """After careful consideration, I would rate the given add_nums function as 1. The code is simple, clean, and easy to understand. It performs the expected operation of adding two numbers together and returning their sum."""
         },
         {
             "role": user_role,
-            "content": f"""Please rank the following {function_name} function from 0 to 1, where 0 means the code is not good and 1 means the code is good:
+            "content": """Please rank the following mul_nums function from 0 to 1, where 0 means the code has a bug and 1 means the code is good:
+```
+# Multiply two numbers and return their product
+def mul_nums(x, y):
+    return x + y
+```"""
+        },
+        {
+            "role": assistant_role,
+            "content": """After careful consideration, I would rate the given add_nums function as 0. The given mul_nums function does not perform the multiplication operation correctly, as it returns the sum of the two input parameters rather than their product."""
+        },
+        {
+            "role": user_role,
+            "content": f"""Please rank the following {function_name} function from 0 to 1, where 0 means the code has a bug and 1 means the code is good:
 ```python
 {commented_code}
 ```"""
@@ -458,7 +471,7 @@ def add_nums(x, y):
     return x + y
 ```
 
-Please rank the following unit test code from 0 to 1, where 0 means the code is not good and 1 means the code is good:
+Please rank the following unit test code from 0 to 1, where 0 means the code has a bug and 1 means the code is good:
 ```python
 import pytest
 from add_nums import add_nums
@@ -481,21 +494,14 @@ def test_add_nums_mixed():
         },
         {
             "role": assistant_role,
-            "content": """After careful consideration, I would rank the given unit test code as 0.75 out of 1. The test cases cover different scenarios (adding two positive numbers, two negative numbers, and a positive and a negative number), which is good. However, there's an error in the first test case:
+            "content": """After careful consideration, I would rank the given unit test code as 0. The test cases cover different scenarios (adding two positive numbers, two negative numbers, and a positive and a negative number), which is good. However, there's an error in the first test case:
 ```python
 def test_add_nums_positive():
     # Test case 1: adding two positive numbers
     result = add_nums(2, 3)
     assert result == 6
 ```
-The assertion should be assert result == 5 instead of assert result == 6. The correct version would be:
-```python
-def test_add_nums_positive():
-    # Test case 1: adding two positive numbers
-    result = add_nums(2, 3)
-    assert result == 5
-```
-After fixing this issue, the test code would be ranked as 1 out of 1, since it would be fully correct.
+The assertion should be assert result == 5 instead of assert result == 6.
 """
         },
         {

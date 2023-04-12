@@ -102,7 +102,7 @@ def copy_and_run_pytest(source_dir, function_name, code_id, test_id, executor):
 
 def generate_requirements(project_path, output_file='requirements.txt'):
     result = subprocess.run(['pipreqs', project_path, '--force', '--savepath', output_file], capture_output=True, text=True)
-    
+
     if result.returncode == 0:
         return True
     else:

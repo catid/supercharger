@@ -12,7 +12,7 @@ bad_code = """
 Sure!  Here's the code you requested:
 
 ```python
-import math
+#import math oops we forgot the math library
 
 def add(a,     b):
     temp = {
@@ -93,7 +93,7 @@ def main():
         print("Code cleaning failed!")
         return
 
-    #print(f"Cleaned code: {code}")
+    print(f"Cleaned code: {code}")
 
     # Add this call back into the code
     code += "\ndostuff()"
@@ -117,8 +117,9 @@ The maximum value in the list is 91
     with open(script_path, "w") as f:
         f.write(code)
 
-
     docker_execute = DockerExecute(sources_dirname=sources_dirname)
+
+    docker_execute.execute(command="pip install smart_imports")
 
     # Prime the pump
     exit_code, output = docker_execute.execute(test_script)
