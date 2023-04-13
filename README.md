@@ -109,13 +109,14 @@ When running a client, specify the load balancer port 8000 instead of 5000 to us
 If you have one worker node:
 
 ```bash
-python codegen/codegen.py --workers 1 --node localhost --port 5000
+python codegen/codegen.py
 ```
 
 If you are using the load balancer on localhost:
 
 ```bash
-python codegen/codegen.py
+# Number of workers should match the number of entries in load_balancer_nodes.txt
+python codegen/codegen.py --workers 8 --node localhost --port 8000
 ```
 
 Results will be summarized on the console as they come in, and you can review the generated code under `./sources/func_name/`.
