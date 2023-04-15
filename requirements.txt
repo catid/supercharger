@@ -5,6 +5,7 @@ git+https://github.com/huggingface/transformers.git
 sentencepiece
 accelerate
 bitsandbytes
+numpy
 
 # Server dependencies
 fastapi

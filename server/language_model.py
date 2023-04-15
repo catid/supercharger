@@ -4,6 +4,7 @@ from model_baize import load_model_baize
 from model_galpaca import load_model_galpaca
 from model_koala import load_model_koala
 from model_vicuna import load_model_vicuna
+from model_llama import load_model_llama
 
 def is_array_of_strings(input_array):
     if isinstance(input_array, list) and all(isinstance(element, str) for element in input_array):
@@ -21,6 +22,8 @@ class LanguageModel:
             self.tokenizer, self.model, self.context_len = load_model_koala(model_name, load_in_8bit)
         elif "vicuna" in model_name:
             self.tokenizer, self.model, self.context_len = load_model_vicuna(model_name, load_in_8bit)
+        elif "llama" in model_name:
+            self.tokenizer, self.model, self.context_len = load_model_llama(model_name, load_in_8bit)
         else:
             raise Exception(f"Unknown model_name={model_name}")
 
