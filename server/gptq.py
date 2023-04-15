@@ -1,5 +1,6 @@
 # Copied from https://github.com/catid/GPTQ-for-LLaMa-65B-2GPU
 
+import os
 import torch
 import torch.nn as nn
 import numpy as np
@@ -8,7 +9,7 @@ import builtins
 import math
 import time
 from transformers.models.llama.modeling_llama import LlamaAttention, apply_rotary_pos_emb
-from transformers import AutoTokenizer
+from transformers.utils.hub import cached_file
 import transformers
 import triton
 import triton.language as tl
@@ -704,9 +705,9 @@ def find_layers(module, layers=[nn.Conv2d, nn.Linear], name=''):
         ))
     return res
 
-def load_quant(model, checkpoint, wbits, groupsize, device, warmup_autotune = True):
+def load_quant(model_url, checkpoint, wbits, groupsize, device, warmup_autotune = True):
     from transformers import LlamaConfig, LlamaForCausalLM 
-    config = LlamaConfig.from_pretrained(model)
+    config = LlamaConfig.from_pretrained(model_url)
     def noop(*args, **kwargs):
         pass
     torch.nn.init.kaiming_uniform_ = noop 
@@ -725,7 +726,9 @@ def load_quant(model, checkpoint, wbits, groupsize, device, warmup_autotune = Tr
             del layers[name]
     make_quant(model, layers, wbits, groupsize)
 
-    print('Loading model ...')
+    checkpoint = cached_file(model_url, filename=checkpoint)
+
+    print(f"Loading model {checkpoint} ...")
     if checkpoint.endswith('.safetensors'):
         from safetensors.torch import load_file as safe_load
         if device == -1:
