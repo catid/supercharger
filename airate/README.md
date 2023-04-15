@@ -44,7 +44,9 @@ pip install -r airate/requirements.txt
 
 ## Test airate
 
-First run 
+First run the server (see parent folder for instructions) - This is how to change the model.
+
+Then run the tests:
 
 ```bash
 python airate/airate.py --node localhost --port 5000 airate/tests/
