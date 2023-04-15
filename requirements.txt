@@ -6,6 +6,7 @@ sentencepiece
 accelerate
 bitsandbytes
 numpy
+safetensors
 
 # Server dependencies
 fastapi

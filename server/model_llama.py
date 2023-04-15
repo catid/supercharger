@@ -4,7 +4,7 @@ import logging
 import torch
 from transformers import AutoTokenizer, LlamaForCausalLM
 
-from gptq.llama_inference import load_quant
+from  gptq import load_quant
 
 import accelerate
 
@@ -18,7 +18,7 @@ def load_model_llama(model_name="llama-65b-4bit", load_in_8bit=None):
     if model_name == "llama-65b-4bit":
         #model_path = "catid/llama-65b-4bit"
         model_path = "/home/catid/models/llama-65b-4bit"
-        model_load = os.join(model_path, "llama65b-4bit-128g.safetensors")
+        model_load = os.path.join(model_path, "llama65b-4bit-128g.safetensors")
         wbits = 4
         groupsize = 128
     else:
