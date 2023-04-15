@@ -19,6 +19,8 @@ Want to leverage AI to scan your codebase for bugs, but are unable to upload you
 
 These models are huge.  Even with quantization, you'll need two RTX3090 or RTX4090 GPUs to run models large enough to correct analyze source code (30B or 65B).  Since 8-bit quantization is as small as you'd want to go with 30B models, they still require 2 GPUs, and in practice 65B models run about the same speed or faster than 30B models, so I'd recommend just using the default 65B model.  I'd recommend using Ubuntu Linux for the operating system on the server because makes everything easier.
 
+I also tried llama.cpp for this and implemented a pretty good framework but it also is far too slow even with OpenBLAS.  Code here: https://github.com/catid/llamanal.cpp
+
 ## Can open-source LLVM models detect bugs in source code?
 
 No:
