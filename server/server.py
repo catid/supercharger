@@ -74,7 +74,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Supercharged Vicuna-13B")
     parser.add_argument("--listen", type=int, default=5000, help="Port to listen on (default: 5000)")
-    parser.add_argument("--model", type=str, help="Select model to use. Available options: baize-30b, baize-13b, baize-7b, galpaca-30b, galpaca-7b, koala-13b, koala-7b, vicuna-13b, vicuna-7b", default="baize-30b")
+    parser.add_argument("--model", type=str, help="Select model to use. Available options: baize-30b, baize-13b, baize-7b, galpaca-30b, galpaca-7b, koala-13b, koala-7b, vicuna-13b, vicuna-7b, llama-65b-4bit", default="llama-65b-4bit")
     parser.add_argument("--8bit", action="store_true", help="Use 8-bit precision (default: False)")
     parser.add_argument("--fp16", action="store_true", help="Use 16-bit precision (default: False)")
 
