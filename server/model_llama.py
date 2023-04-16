@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 def load_model_llama(model_name="llama-65b-4bit", load_in_8bit=None):
     if model_name == "llama-65b-4bit":
-        model_path = "Neko-Institute-of-Science/LLaMA-65B-4bit-128g"
-        model_load = "llama-65b-4bit-128g.safetensors"
+        model_path = "catid/llama-65b-4bit"
+        model_load = "llama65b-4bit-128g.safetensors"
         wbits = 4
         groupsize = 128
     else:
